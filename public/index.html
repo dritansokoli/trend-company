@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TREND COMPANY - Home begins at the door</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script:wght@400;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="#home" class="logo">
+                    <img src="logo.png" alt="TREND COMPANY" class="logo-img">
+                    <div class="logo-text">
+                        <h1>TREND</h1>
+                        <span class="logo-subtitle">COMPANY</span>
+                    </div>
+                </a>
+                <nav class="nav-menu">
+                    <a href="#home" class="nav-link active">Kryefaqja</a>
+                    <div class="nav-dropdown">
+                        <a href="#products" class="nav-link">Produktet <i class="fas fa-chevron-down dropdown-arrow"></i></a>
+                        <div class="dropdown-menu">
+                            <a href="#products" class="dropdown-item" data-category="dyer">
+                                <i class="fas fa-door-open"></i> Dyer
+                            </a>
+                            <a href="#products" class="dropdown-item" data-category="laminat">
+                                <i class="fas fa-layer-group"></i> Laminat
+                            </a>
+                            <a href="#products" class="dropdown-item" data-category="mobilje">
+                                <i class="fas fa-couch"></i> Mobilje
+                            </a>
+                            <a href="#products" class="dropdown-item" data-category="tavolina-kuzhine">
+                                <i class="fas fa-utensils"></i> Tavolina Kuzhine
+                            </a>
+                            <a href="#products" class="dropdown-item" data-category="tavolina-salloni">
+                                <i class="fas fa-mug-hot"></i> Tavolina Salloni
+                            </a>
+                        </div>
+                    </div>
+                    <a href="#about" class="nav-link">Rreth Nesh</a>
+                    <a href="#contact" class="nav-link">Kontakt</a>
+                </nav>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <input type="text" placeholder="Kërko produkte..." id="searchInput">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <button class="action-btn" id="wishlistBtn" title="Lista e Dëshirave">
+                        <i class="fas fa-heart"></i>
+                        <span class="action-count" id="wishlistCount">0</span>
+                    </button>
+                    <button class="action-btn" id="compareBtn" title="Krahasoni Produkte">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span class="action-count" id="compareCount">0</span>
+                    </button>
+                    <button class="cart-btn" id="cartBtn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </button>
+                    <a href="#" class="auth-link" id="authLink">
+                        <i class="fas fa-user"></i>
+                        <span>Kyçu / Regjistrohu</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <p class="hero-tagline">Home begins at the door</p>
+            <h2>PRODUKTE PËR SHTËPINË TUAJ</h2>
+            <p class="hero-description">Dyer, laminat, mobilje dhe tavolina me cilësi të lartë nga koleksioni ynë ekskluziv</p>
+            <a href="#products" class="btn btn-primary">Shiko Produktet</a>
+        </div>
+    </section>
+
+    <!-- Category Selection -->
+    <section class="category-section" id="products">
+        <div class="container">
+            <div class="category-header">
+                <h2 class="category-title" id="categoryTitle">Kërko Produkte</h2>
+                <p class="category-subtitle" id="categorySubtitle">Zgjidh kategorinë për të parë produktet e disponueshme</p>
+            </div>
+            <div class="category-buttons" id="categoryButtons">
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section">
+        <div class="container">
+            <h2 class="section-title">Produktet Tona</h2>
+            <div class="products-grid" id="productsGrid">
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section" id="about">
+        <div class="container">
+            <div class="about-content">
+                <h2>Rreth Nesh</h2>
+                <p>TREND COMPANY është lider në shitjen e produkteve për shtëpi me cilësi të lartë. Nga dyert moderne dhe të blinduara, laminat premium, mobilje elegante, deri te tavolinat e kuzhinës dhe sallonit — ofrojmë zgjidhje që plotësojnë nevojat e çdo shtëpie dhe biznesi. Me mbi 10 vjet përvojë, ne garantojmë cilësi dhe kënaqësi.</p>
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Cilësi Premium</h3>
+                        <p>Materiale të zgjedhura me kujdes</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-shipping-fast"></i>
+                        <h3>Dërgesë e Shpejtë</h3>
+                        <p>Dërgesë në të gjithë Kosovën</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-headset"></i>
+                        <h3>Mbështetje 24/7</h3>
+                        <p>Jemi këtu për t'ju ndihmuar</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" id="contact">
+        <div class="container">
+            <h2 class="section-title">Kontaktoni Ne</h2>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h3>Telefon</h3>
+                            <p><a href="tel:+38349900500" style="color:inherit;text-decoration:none;">+383 49 900 500</a></p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h3>Email</h3>
+                            <p>info@trendcompany.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h3>Adresa</h3>
+                            <p>Rahovec, Kosovë</p>
+                        </div>
+                    </div>
+                </div>
+                <form class="contact-form">
+                    <input type="text" placeholder="Emri juaj" required>
+                    <input type="email" placeholder="Email" required>
+                    <textarea placeholder="Mesazhi juaj" rows="5" required></textarea>
+                    <button type="submit" class="btn btn-primary">Dërgo Mesazhin</button>
+                </form>
+            </div>
+            <div class="contact-map">
+                <iframe
+                    src="https://maps.google.com/maps?q=42.39321,20.64620&z=16&output=embed"
+                    width="100%"
+                    height="400"
+                    style="border:0; border-radius: 15px;"
+                    allowfullscreen=""
+                    loading="lazy">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <a href="#home" class="footer-logo" style="text-decoration:none;color:inherit;">
+                        <img src="logo.png" alt="TREND COMPANY" class="footer-logo-img">
+                        <h3>TREND COMPANY</h3>
+                    </a>
+                    <p>Home begins at the door. Dyer, laminat, mobilje dhe tavolina me cilësi të lartë për shtëpinë tuaj.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Linqe të Shpejta</h4>
+                    <ul>
+                        <li><a href="#home">Kryefaqja</a></li>
+                        <li><a href="#products">Produktet</a></li>
+                        <li><a href="#about">Rreth Nesh</a></li>
+                        <li><a href="#contact">Kontakt</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Ndiqni Ne</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 TREND COMPANY. Të gjitha të drejtat e rezervuara.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h2>Shporta</h2>
+            <button class="close-cart" id="closeCart">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <strong>Totali: <span id="cartTotal">0</span> Euro</strong>
+            </div>
+            <button class="btn btn-primary btn-block" id="checkoutBtn">Blej Tani</button>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div class="modal-body" id="modalBody">
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-modal-content">
+            <button class="auth-close" id="authClose">&times;</button>
+            <h2 class="auth-title" id="authTitle">Kyçu / Regjistrohu</h2>
+            <p class="auth-subtitle" id="authSubtitle">Krijo një llogari të re për porosi më të shpejta.</p>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Kyçu</button>
+                <button class="auth-tab" data-tab="register">Regjistrohu</button>
+            </div>
+            <!-- Login Form -->
+            <form id="loginFormClient" class="auth-form" style="display:block;">
+                <div class="auth-field">
+                    <label>Email *</label>
+                    <input type="email" id="clientLoginEmail" placeholder="ti@shembull.com" required>
+                </div>
+                <div class="auth-field">
+                    <label>Fjalëkalimi *</label>
+                    <input type="password" id="clientLoginPass" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="auth-submit">Kyçu</button>
+            </form>
+            <!-- Register Form -->
+            <form id="registerFormClient" class="auth-form" style="display:none;">
+                <div class="auth-row">
+                    <div class="auth-field"><label>Emri *</label><input type="text" id="regFirstName" placeholder="p.sh. Ardit" required></div>
+                    <div class="auth-field"><label>Mbiemri *</label><input type="text" id="regLastName" placeholder="p.sh. Krasniqi" required></div>
+                </div>
+                <div class="auth-row">
+                    <div class="auth-field">
+                        <label>Shteti *</label>
+                        <select id="regCountry" required>
+                            <option value="">Zgjidh shtetin</option>
+                            <option value="XK" selected>Kosovë</option>
+                            <option value="AL">Shqipëri</option>
+                            <option value="MK">Maqedoni e Veriut</option>
+                            <option value="ME">Mal i Zi</option>
+                            <option value="DE">Gjermani</option>
+                            <option value="CH">Zvicër</option>
+                            <option value="AT">Austri</option>
+                            <option value="OTHER">Tjetër</option>
+                        </select>
+                    </div>
+                    <div class="auth-field">
+                        <label>Qyteti *</label>
+                        <select id="regCity" required>
+                            <option value="">Zgjidh qytetin</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label>Telefoni *</label>
+                    <div class="phone-input">
+                        <span class="phone-prefix">+383</span>
+                        <input type="tel" id="regPhone" placeholder="49 900 500" required>
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label>Adresa e Plotë</label>
+                    <input type="text" id="regAddress" placeholder="Rruga, numri, pallati, apartamenti...">
+                </div>
+                <div class="auth-field">
+                    <label>Email *</label>
+                    <input type="email" id="regEmail" placeholder="ti@shembull.com" required>
+                </div>
+                <div class="auth-field">
+                    <label>Fjalëkalimi *</label>
+                    <input type="password" id="regPassword" placeholder="••••••••" required minlength="6">
+                </div>
+                <button type="submit" class="auth-submit">Regjistrohu</button>
+            </form>
+            <!-- Logged In State -->
+            <div id="authLoggedIn" style="display:none;text-align:center;padding:1rem 0;">
+                <i class="fas fa-user-circle" style="font-size:4rem;color:var(--primary-color);margin-bottom:1rem;display:block;"></i>
+                <h3 id="authUserName"></h3>
+                <p id="authUserEmail" style="color:#6b7280;margin-bottom:1.5rem;"></p>
+                <button class="auth-submit" onclick="logoutClient()" style="background:#6b7280;">Dil nga Llogaria</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wishlist Sidebar -->
+    <div class="wishlist-sidebar" id="wishlistSidebar">
+        <div class="cart-header">
+            <h2><i class="fas fa-heart" style="color:var(--primary-color);"></i> Lista e Dëshirave</h2>
+            <button class="close-cart" id="closeWishlist"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cart-items" id="wishlistItems"></div>
+    </div>
+
+    <!-- Compare Sidebar -->
+    <div class="compare-sidebar" id="compareSidebar">
+        <div class="cart-header">
+            <h2><i class="fas fa-exchange-alt" style="color:var(--primary-color);"></i> Krahasimi</h2>
+            <button class="close-cart" id="closeCompare"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="compare-content" id="compareContent"></div>
+    </div>
+
+    <!-- Floating Contact Buttons -->
+    <div class="floating-contact">
+        <a href="https://wa.me/38349900500" target="_blank" class="floating-btn whatsapp-btn" title="Na kontaktoni ne WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+        <a href="viber://chat?number=%2B38349900500" class="floating-btn viber-btn" title="Na kontaktoni ne Viber">
+            <i class="fab fa-viber"></i>
+        </a>
+        <a href="tel:+38349900500" class="floating-btn phone-btn" title="Na telefononi">
+            <i class="fas fa-phone-alt"></i>
+        </a>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

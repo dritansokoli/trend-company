@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TREND COMPANY - Admin Panel</title>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <img src="logo.png" alt="TREND COMPANY" class="login-logo-img">
+                <h1>TREND COMPANY</h1>
+                <p>Admin Panel</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Përdoruesi</label>
+                    <input type="text" id="loginUsername" placeholder="admin" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Fjalëkalimi</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Hyr
+                </button>
+                <p class="login-hint">Default: admin / admin123</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div class="admin-wrapper" id="adminWrapper" style="display:none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="logo.png" alt="TREND COMPANY">
+                <div>
+                    <h2>TREND</h2>
+                    <span>Admin Panel</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link active" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#" class="sidebar-link" data-page="categories">
+                    <i class="fas fa-folder"></i> Kategoritë
+                </a>
+                <a href="#" class="sidebar-link" data-page="subcategories">
+                    <i class="fas fa-folder-open"></i> Nën-Kategoritë
+                </a>
+                <a href="#" class="sidebar-link" data-page="products">
+                    <i class="fas fa-box"></i> Produktet
+                </a>
+                <a href="#" class="sidebar-link" data-page="stock">
+                    <i class="fas fa-warehouse"></i> Stoku
+                </a>
+                <a href="#" class="sidebar-link" data-page="orders">
+                    <i class="fas fa-shopping-bag"></i> Porositë
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="index.html" class="sidebar-link">
+                    <i class="fas fa-globe"></i> Shiko Faqen
+                </a>
+                <a href="#" class="sidebar-link" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Dil
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <div class="admin-user">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Admin</span>
+                </div>
+            </header>
+
+            <div class="admin-content" id="adminContent">
+                <!-- Pages loaded dynamically -->
+            </div>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
