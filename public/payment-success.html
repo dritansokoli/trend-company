@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagesa u Krye - TREND COMPANY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Montserrat', sans-serif; background: #f8f9fa; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .container { background: white; border-radius: 20px; max-width: 480px; width: 100%; padding: 3rem 2rem; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.1); }
+        .icon-circle { width: 100px; height: 100px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; }
+        .icon-circle i { font-size: 3rem; color: #16a34a; }
+        h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: #1a1a2e; margin-bottom: .5rem; }
+        .subtitle { color: #6b7280; margin-bottom: 1.5rem; }
+        .order-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+        .order-number { font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+        .order-label { font-size: .85rem; color: #6b7280; margin-bottom: .25rem; }
+        .paid-badge { display: inline-flex; align-items: center; gap: .4rem; background: #dcfce7; color: #16a34a; padding: .4rem 1rem; border-radius: 20px; font-weight: 600; font-size: .9rem; margin-top: .75rem; }
+        .info { font-size: .85rem; color: #6b7280; margin-bottom: 2rem; }
+        .btn { display: inline-block; padding: .8rem 2.5rem; background: #9B1B1B; color: white; text-decoration: none; border-radius: 10px; font-weight: 600; font-family: 'Montserrat', sans-serif; transition: background .3s; }
+        .btn:hover { background: #7a1515; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon-circle"><i class="fas fa-check-circle"></i></div>
+        <h1>Pagesa u Krye me Sukses!</h1>
+        <p class="subtitle">Faleminderit për blerjen tuaj</p>
+        <div class="order-box">
+            <p class="order-label">Numri i porosisë</p>
+            <p class="order-number" id="orderNum">-</p>
+            <div class="paid-badge"><i class="fas fa-check-circle"></i> E Paguar</div>
+        </div>
+        <p class="info">Porosia juaj është konfirmuar dhe do të përpunohet menjëherë.<br>Do t'ju kontaktojmë kur porosia të jetë gati për dërgesë.</p>
+        <a href="/" class="btn"><i class="fas fa-home"></i> Kthehu në Faqe</a>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const orderNum = params.get('order');
+        if (orderNum) document.getElementById('orderNum').textContent = orderNum;
+    </script>
+</body>
+</html>

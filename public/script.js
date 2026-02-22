@@ -349,13 +349,15 @@ function showCheckoutModal() {
     const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
     const shipping = subtotal >= 100 ? 0 : 5;
     const total = subtotal + shipping;
-    const countryNames = { XK:'Kosovë', AL:'Shqipëri', MK:'Maqedoni', ME:'Mal i Zi', DE:'Gjermani', CH:'Zvicër', AT:'Austri' };
+
+    const pmStyle = `display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border:2px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:all .2s;`;
+    const pmActiveStyle = `border-color:#9B1B1B;background:#fef2f2;`;
 
     const modal = document.createElement('div');
     modal.id = 'checkoutModal';
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:5000;display:flex;align-items:center;justify-content:center;padding:1rem;';
     modal.innerHTML = `
-        <div style="background:white;border-radius:16px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;padding:2rem;position:relative;">
+        <div style="background:white;border-radius:16px;max-width:620px;width:100%;max-height:90vh;overflow-y:auto;padding:2rem;position:relative;">
             <button onclick="document.getElementById('checkoutModal').remove()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">&times;</button>
             <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#1a1a2e;margin-bottom:.5rem;"><i class="fas fa-shopping-bag" style="color:#9B1B1B;"></i> Përfundo Porosinë</h2>
             <p style="color:#6b7280;margin-bottom:1.5rem;font-size:.9rem;">Plotëso të dhënat për dërgesë</p>
@@ -383,7 +385,36 @@ function showCheckoutModal() {
                 <div class="auth-field" style="margin-top:.75rem;"><label>Shënime (opsionale)</label>
                     <textarea id="coNotes" rows="2" placeholder="Shënime shtesë për porosinë..." style="width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;resize:vertical;"></textarea></div>
 
-                <div style="background:#f8f9fa;border-radius:12px;padding:1rem;margin-top:1.5rem;">
+                <!-- Payment Method Selection -->
+                <div style="margin-top:1.5rem;">
+                    <h3 style="font-size:1rem;margin-bottom:.75rem;color:#1a1a2e;"><i class="fas fa-credit-card" style="color:#9B1B1B;"></i> Mënyra e Pagesës</h3>
+                    <div style="display:flex;flex-direction:column;gap:.5rem;" id="paymentMethods">
+                        <label id="pmCod" style="${pmStyle}${pmActiveStyle}" onclick="selectPayment('cod')">
+                            <input type="radio" name="payment_method" value="cod" checked style="display:none;">
+                            <div style="width:42px;height:42px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-money-bill-wave" style="color:#16a34a;font-size:1.1rem;"></i></div>
+                            <div style="flex:1;"><strong style="font-size:.9rem;">Para në Dorë (COD)</strong><p style="font-size:.78rem;color:#6b7280;margin:0;">Paguani kur t'ju dorëzohet porosia</p></div>
+                        </label>
+                        <label id="pmBank" style="${pmStyle}" onclick="selectPayment('bank')">
+                            <input type="radio" name="payment_method" value="bank" style="display:none;">
+                            <div style="width:42px;height:42px;border-radius:10px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-university" style="color:#3b82f6;font-size:1.1rem;"></i></div>
+                            <div style="flex:1;"><strong style="font-size:.9rem;">Transfertë Bankare</strong><p style="font-size:.78rem;color:#6b7280;margin:0;">Paguani me transfertë para dërgesës</p></div>
+                        </label>
+                        <label id="pmCard" style="${pmStyle}" onclick="selectPayment('card')">
+                            <input type="radio" name="payment_method" value="card" style="display:none;">
+                            <div style="width:42px;height:42px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-credit-card" style="color:#f59e0b;font-size:1.1rem;"></i></div>
+                            <div style="flex:1;"><strong style="font-size:.9rem;">Pagesë me Kartë</strong><p style="font-size:.78rem;color:#6b7280;margin:0;">Paguani menjëherë me kartë krediti/debiti</p></div>
+                        </label>
+                    </div>
+                    <div id="bankDetails" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:1rem;margin-top:.75rem;font-size:.85rem;">
+                        <p style="font-weight:600;margin-bottom:.5rem;color:#1e40af;"><i class="fas fa-info-circle"></i> Detajet Bankare</p>
+                        <p><strong>Banka:</strong> [Emri i Bankës]</p>
+                        <p><strong>IBAN:</strong> XK00 0000 0000 0000 0000</p>
+                        <p><strong>Përfituesi:</strong> TREND COMPANY SH.P.K.</p>
+                        <p style="color:#6b7280;margin-top:.5rem;font-size:.8rem;">Shkruani numrin e porosisë si referencë në transfertë.</p>
+                    </div>
+                </div>
+
+                <div style="background:#f8f9fa;border-radius:12px;padding:1rem;margin-top:1.25rem;">
                     <h3 style="font-size:1rem;margin-bottom:.75rem;color:#1a1a2e;">Përmbledhja e Porosisë</h3>
                     ${cart.map(item => `<div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.85rem;color:#4b5563;">
                         <span>${item.name} × ${item.quantity}</span><span>${formatPrice(item.price * item.quantity)}</span>
@@ -406,7 +437,8 @@ function showCheckoutModal() {
     document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('coSubmitBtn');
-        btn.textContent = 'Duke dërguar porosinë...';
+        const selectedPm = document.querySelector('input[name="payment_method"]:checked').value;
+        btn.textContent = selectedPm === 'card' ? 'Duke ridrejtuar në pagesë...' : 'Duke dërguar porosinë...';
         btn.disabled = true;
 
         try {
@@ -418,6 +450,7 @@ function showCheckoutModal() {
                 customer_country: document.getElementById('coCountry').value,
                 customer_address: document.getElementById('coAddress').value,
                 notes: document.getElementById('coNotes').value,
+                payment_method: selectedPm,
                 items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, image: i.image || '' }))
             };
 
@@ -428,9 +461,26 @@ function showCheckoutModal() {
             const data = await res.json();
 
             if (data.success) {
-                modal.remove();
-                cart = []; saveCart(); updateCartUI();
-                showOrderSuccess(data.order_number, data.total);
+                if (selectedPm === 'card') {
+                    const stripeRes = await fetch('/api/stripe/create-session', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include', body: JSON.stringify({ order_id: data.order_id })
+                    });
+                    const stripeData = await stripeRes.json();
+                    if (stripeData.url) {
+                        cart = []; saveCart(); updateCartUI();
+                        window.location.href = stripeData.url;
+                        return;
+                    } else {
+                        modal.remove();
+                        cart = []; saveCart(); updateCartUI();
+                        showOrderSuccess(data.order_number, data.total, 'card_no_stripe');
+                    }
+                } else {
+                    modal.remove();
+                    cart = []; saveCart(); updateCartUI();
+                    showOrderSuccess(data.order_number, data.total, selectedPm);
+                }
             } else {
                 alert(data.error || 'Gabim gjatë porosisë');
                 btn.innerHTML = '<i class="fas fa-check-circle"></i> Konfirmo Porosinë';
@@ -444,23 +494,59 @@ function showCheckoutModal() {
     });
 }
 
-function showOrderSuccess(orderNumber, total) {
+window.selectPayment = function(method) {
+    document.querySelectorAll('#paymentMethods label').forEach(l => {
+        l.style.borderColor = '#e5e7eb';
+        l.style.background = 'white';
+    });
+    const el = document.getElementById('pm' + method.charAt(0).toUpperCase() + method.slice(1));
+    if (el) {
+        el.style.borderColor = '#9B1B1B';
+        el.style.background = '#fef2f2';
+        el.querySelector('input').checked = true;
+    }
+    document.getElementById('bankDetails').style.display = method === 'bank' ? 'block' : 'none';
+    const btn = document.getElementById('coSubmitBtn');
+    if (method === 'card') btn.innerHTML = '<i class="fas fa-credit-card"></i> Paguaj me Kartë';
+    else if (method === 'bank') btn.innerHTML = '<i class="fas fa-university"></i> Konfirmo Porosinë (Transfertë)';
+    else btn.innerHTML = '<i class="fas fa-check-circle"></i> Konfirmo Porosinë';
+};
+
+function showOrderSuccess(orderNumber, total, paymentMethod) {
+    let paymentNote = 'Do t\'ju kontaktojmë në telefon për konfirmim të porosisë.';
+    let extraInfo = '';
+
+    if (paymentMethod === 'bank') {
+        paymentNote = 'Ju lutem kryeni transfertën bankare brenda 48 orëve.';
+        extraInfo = `
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:1rem;margin-bottom:1rem;text-align:left;font-size:.85rem;">
+                <p style="font-weight:600;color:#1e40af;margin-bottom:.5rem;"><i class="fas fa-university"></i> Detajet Bankare</p>
+                <p><strong>Banka:</strong> [Emri i Bankës]</p>
+                <p><strong>IBAN:</strong> XK00 0000 0000 0000 0000</p>
+                <p><strong>Përfituesi:</strong> TREND COMPANY SH.P.K.</p>
+                <p style="color:#6b7280;margin-top:.5rem;"><strong>Referenca:</strong> ${orderNumber}</p>
+            </div>`;
+    } else if (paymentMethod === 'card_no_stripe') {
+        paymentNote = 'Pagesa me kartë nuk është konfiguruar ende. Do t\'ju kontaktojmë për mënyra alternative.';
+    }
+
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:5000;display:flex;align-items:center;justify-content:center;padding:1rem;';
     modal.innerHTML = `
-        <div style="background:white;border-radius:16px;max-width:450px;width:100%;padding:2.5rem;text-align:center;">
+        <div style="background:white;border-radius:16px;max-width:450px;width:100%;padding:2.5rem;text-align:center;max-height:90vh;overflow-y:auto;">
             <div style="width:80px;height:80px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
                 <i class="fas fa-check" style="font-size:2.5rem;color:#16a34a;"></i>
             </div>
             <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#1a1a2e;margin-bottom:.5rem;">Porosia u Dërgua!</h2>
             <p style="color:#6b7280;margin-bottom:1rem;">Faleminderit për porosinë tuaj</p>
-            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1.5rem;">
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
                 <p style="font-size:.85rem;color:#6b7280;margin-bottom:.25rem;">Numri i porosisë</p>
                 <p style="font-size:1.3rem;font-weight:700;color:#1a1a2e;">${orderNumber}</p>
                 <p style="font-size:1.1rem;color:#9B1B1B;font-weight:600;margin-top:.5rem;">Totali: ${formatPrice(total)}</p>
             </div>
-            <p style="font-size:.85rem;color:#6b7280;margin-bottom:1.5rem;">Do t'ju kontaktojmë në telefon për konfirmim të porosisë.</p>
-            <button onclick="this.closest('div[style]').parentElement.remove()" style="padding:.7rem 2rem;background:#9B1B1B;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-family:'Montserrat',sans-serif;">
+            ${extraInfo}
+            <p style="font-size:.85rem;color:#6b7280;margin-bottom:1.5rem;">${paymentNote}</p>
+            <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:.7rem 2rem;background:#9B1B1B;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-family:'Montserrat',sans-serif;">
                 Vazhdo Blerjen
             </button>
         </div>`;

@@ -89,7 +89,7 @@ async function loadPage(page) {
         case 'stock': title.textContent = 'Menaxhimi i Stokut'; renderStockPage(content); break;
         case 'orders': title.textContent = 'Porositë'; await renderOrders(content); break;
         case 'customers': title.textContent = 'Klientët'; await renderCustomers(content); break;
-        case 'settings': title.textContent = 'Cilësimet'; renderSettings(content); break;
+        case 'settings': title.textContent = 'Cilësimet'; await renderSettings(content); break;
     }
 }
 
@@ -440,14 +440,17 @@ async function renderOrders(el) {
 
     const statusLabels = { pending:'Në Pritje', confirmed:'Konfirmuar', processing:'Në Përpunim', shipped:'Dërguar', delivered:'Dorëzuar', cancelled:'Anuluar' };
     const statusColors = { pending:'#f59e0b', confirmed:'#3b82f6', processing:'#8b5cf6', shipped:'#06b6d4', delivered:'#16a34a', cancelled:'#ef4444' };
-    const statusIcons = { pending:'fa-clock', confirmed:'fa-check', processing:'fa-cog', shipped:'fa-truck', delivered:'fa-check-double', cancelled:'fa-times' };
-    const countryNames = { XK:'Kosovë', AL:'Shqipëri', MK:'Maqedoni', ME:'Mal i Zi', DE:'Gjermani', CH:'Zvicër', AT:'Austri' };
+    const pmLabels = { cod:'Para në Dorë', bank:'Transfertë', card:'Kartë' };
+    const pmIcons = { cod:'fa-money-bill-wave', bank:'fa-university', card:'fa-credit-card' };
+    const pmColors = { cod:'#16a34a', bank:'#3b82f6', card:'#f59e0b' };
+    const payLabels = { unpaid:'E Papaguar', awaiting:'Në Pritje', paid:'E Paguar', refunded:'Rimbursuar' };
+    const payColors = { unpaid:'#ef4444', awaiting:'#f59e0b', paid:'#16a34a', refunded:'#8b5cf6' };
 
     const stats = {
         total: orders.length,
         pending: orders.filter(o => o.status === 'pending').length,
         processing: orders.filter(o => ['confirmed','processing','shipped'].includes(o.status)).length,
-        delivered: orders.filter(o => o.status === 'delivered').length,
+        unpaid: orders.filter(o => o.payment_status === 'unpaid' && o.status !== 'cancelled').length,
         revenue: orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0)
     };
 
@@ -455,7 +458,7 @@ async function renderOrders(el) {
         <div class="stats-grid" style="margin-bottom:1.5rem;">
             <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-shopping-bag"></i></div><div class="stat-info"><h3>${stats.total}</h3><p>Porosi Gjithsej</p></div></div>
             <div class="stat-card" style="${stats.pending > 0 ? 'border-left:3px solid #f59e0b;' : ''}"><div class="stat-icon" style="background:#fef3c7;color:#f59e0b;"><i class="fas fa-clock"></i></div><div class="stat-info"><h3>${stats.pending}</h3><p>Në Pritje</p></div></div>
-            <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;color:#3b82f6;"><i class="fas fa-truck"></i></div><div class="stat-info"><h3>${stats.processing}</h3><p>Në Proces</p></div></div>
+            <div class="stat-card" style="${stats.unpaid > 0 ? 'border-left:3px solid #ef4444;' : ''}"><div class="stat-icon" style="background:#fee2e2;color:#ef4444;"><i class="fas fa-exclamation-circle"></i></div><div class="stat-info"><h3>${stats.unpaid}</h3><p>Të Papaguara</p></div></div>
             <div class="stat-card"><div class="stat-icon green"><i class="fas fa-euro-sign"></i></div><div class="stat-info"><h3>${stats.revenue.toFixed(2)} €</h3><p>Të Ardhura</p></div></div>
         </div>
 
@@ -472,17 +475,29 @@ async function renderOrders(el) {
                 </div>
             </div>
             <table class="admin-table"><thead><tr>
-                <th>#</th><th>Nr. Porosisë</th><th>Klienti</th><th>Produktet</th><th>Totali</th><th>Statusi</th><th>Data</th><th>Veprime</th>
+                <th>#</th><th>Nr. Porosisë</th><th>Klienti</th><th>Totali</th><th>Pagesa</th><th>Statusi</th><th>Data</th><th>Veprime</th>
             </tr></thead><tbody>
-                ${orders.map((o, i) => `<tr>
+                ${orders.map((o, i) => {
+                    const pm = o.payment_method || 'cod';
+                    const ps = o.payment_status || 'unpaid';
+                    return `<tr>
                     <td>${i + 1}</td>
                     <td><strong style="font-family:monospace;">${o.order_number}</strong></td>
                     <td>
                         <strong>${o.customer_name}</strong><br>
                         <small style="color:#6b7280;">${o.customer_phone}</small>
                     </td>
-                    <td><small>${o.items.map(it => it.name + ' ×' + it.quantity).join(', ')}</small></td>
                     <td><strong style="color:#9B1B1B;">${o.total.toFixed(2)} €</strong></td>
+                    <td>
+                        <div style="display:flex;flex-direction:column;gap:.3rem;">
+                            <span style="display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;color:${pmColors[pm]};font-weight:600;">
+                                <i class="fas ${pmIcons[pm]}"></i> ${pmLabels[pm] || pm}
+                            </span>
+                            <select onchange="updatePaymentStatus(${o.id}, this.value)" style="padding:.2rem .4rem;border-radius:5px;border:1px solid ${payColors[ps]};color:${payColors[ps]};font-weight:600;font-size:.75rem;background:white;cursor:pointer;">
+                                ${Object.keys(payLabels).map(s => `<option value="${s}" ${s === ps ? 'selected' : ''}>${payLabels[s]}</option>`).join('')}
+                            </select>
+                        </div>
+                    </td>
                     <td>
                         <select onchange="updateOrderStatus(${o.id}, this.value)" style="padding:.3rem .5rem;border-radius:6px;border:1px solid ${statusColors[o.status]};color:${statusColors[o.status]};font-weight:600;font-size:.8rem;background:white;cursor:pointer;">
                             ${Object.keys(statusLabels).map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${statusLabels[s]}</option>`).join('')}
@@ -493,7 +508,7 @@ async function renderOrders(el) {
                         <button class="btn btn-outline btn-sm" onclick="viewOrder(${o.id})" title="Shiko"><i class="fas fa-eye"></i></button>
                         <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id},'${o.order_number}')" title="Fshi"><i class="fas fa-trash"></i></button>
                     </td>
-                </tr>`).join('')}
+                </tr>`;}).join('')}
             </tbody></table>
             ${orders.length === 0 ? '<div class="empty-state"><i class="fas fa-shopping-bag"></i><p>Nuk ka porosi ende.</p></div>' : ''}
         </div>`;
@@ -510,11 +525,23 @@ window.updateOrderStatus = async function(id, status) {
     loadPage('orders');
 };
 
+window.updatePaymentStatus = async function(id, payment_status) {
+    await api(`/api/orders/${id}/payment`, { method: 'PATCH', body: JSON.stringify({ payment_status }) });
+    showNotification('Statusi i pagesës u përditësua!');
+    loadPage('orders');
+};
+
 window.viewOrder = async function(id) {
     const o = await api('/api/orders/' + id);
     if (!o.id) return;
     const statusLabels = { pending:'Në Pritje', confirmed:'Konfirmuar', processing:'Në Përpunim', shipped:'Dërguar', delivered:'Dorëzuar', cancelled:'Anuluar' };
     const countryNames = { XK:'Kosovë', AL:'Shqipëri', MK:'Maqedoni', ME:'Mal i Zi', DE:'Gjermani', CH:'Zvicër', AT:'Austri' };
+    const pmLabels = { cod:'Para në Dorë', bank:'Transfertë Bankare', card:'Kartë Krediti/Debiti' };
+    const pmIcons = { cod:'fa-money-bill-wave', bank:'fa-university', card:'fa-credit-card' };
+    const payLabels = { unpaid:'E Papaguar', awaiting:'Në Pritje', paid:'E Paguar', refunded:'Rimbursuar' };
+    const payColors = { unpaid:'#ef4444', awaiting:'#f59e0b', paid:'#16a34a', refunded:'#8b5cf6' };
+    const pm = o.payment_method || 'cod';
+    const ps = o.payment_status || 'unpaid';
 
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:5000;display:flex;align-items:center;justify-content:center;padding:1rem;';
@@ -535,6 +562,8 @@ window.viewOrder = async function(id) {
                 <div style="background:#f8f9fa;padding:1rem;border-radius:10px;">
                     <h4 style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Detaje</h4>
                     <p><strong>Statusi:</strong> ${statusLabels[o.status]}</p>
+                    <p><strong>Pagesa:</strong> <i class="fas ${pmIcons[pm]}"></i> ${pmLabels[pm] || pm}</p>
+                    <p><strong>Statusi i pagesës:</strong> <span style="color:${payColors[ps]};font-weight:600;">${payLabels[ps] || ps}</span></p>
                     <p><strong>Nëntotali:</strong> ${o.subtotal.toFixed(2)} €</p>
                     <p><strong>Dërgesa:</strong> ${o.shipping === 0 ? 'FALAS' : o.shipping.toFixed(2) + ' €'}</p>
                     <p style="font-size:1.1rem;font-weight:700;color:#9B1B1B;margin-top:.5rem;">Totali: ${o.total.toFixed(2)} €</p>
@@ -631,26 +660,57 @@ window.deleteCustomer = async function(id, name) {
 };
 
 // SETTINGS
-function renderSettings(el) {
+async function renderSettings(el) {
+    let syncStatus = { lastSync: null, interval: 0 };
+    try {
+        syncStatus = await api('/api/sync-status');
+    } catch {}
+
+    const lastSyncText = syncStatus.lastSync
+        ? new Date(syncStatus.lastSync).toLocaleString('sq-AL')
+        : 'Asnjëherë';
+
     el.innerHTML = `
-        <div class="admin-table-wrapper" style="max-width:500px;">
-            <div class="table-header"><h2><i class="fas fa-lock"></i> Ndrysho Fjalëkalimin</h2></div>
-            <div style="padding:1.5rem;">
-                <form id="changePasswordForm">
-                    <div class="form-group" style="margin-bottom:1rem;">
-                        <label>Fjalëkalimi Aktual</label>
-                        <input type="password" id="oldPassword" placeholder="••••••••" required>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:900px;">
+            <div class="admin-table-wrapper">
+                <div class="table-header"><h2><i class="fas fa-lock"></i> Ndrysho Fjalëkalimin</h2></div>
+                <div style="padding:1.5rem;">
+                    <form id="changePasswordForm">
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Fjalëkalimi Aktual</label>
+                            <input type="password" id="oldPassword" placeholder="••••••••" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Fjalëkalimi i Ri</label>
+                            <input type="password" id="newPassword" placeholder="••••••••" required minlength="6">
+                        </div>
+                        <div class="form-group" style="margin-bottom:1.5rem;">
+                            <label>Konfirmo Fjalëkalimin e Ri</label>
+                            <input type="password" id="confirmPassword" placeholder="••••••••" required minlength="6">
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Ndrysho Fjalëkalimin</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="admin-table-wrapper">
+                <div class="table-header"><h2><i class="fas fa-sync-alt"></i> Sinkronizimi Online</h2></div>
+                <div style="padding:1.5rem;">
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+                        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+                            <i class="fas fa-circle" style="color:${syncStatus.interval > 0 ? '#16a34a' : '#9ca3af'};font-size:.5rem;"></i>
+                            <strong style="font-size:.9rem;">${syncStatus.interval > 0 ? 'Aktiv' : 'Joaktiv'}</strong>
+                        </div>
+                        <p style="font-size:.85rem;color:#6b7280;">Intervali: çdo <strong>${syncStatus.interval}</strong> minuta</p>
+                        <p style="font-size:.85rem;color:#6b7280;">Sinkronizimi i fundit: <strong id="lastSyncTime">${lastSyncText}</strong></p>
                     </div>
-                    <div class="form-group" style="margin-bottom:1rem;">
-                        <label>Fjalëkalimi i Ri</label>
-                        <input type="password" id="newPassword" placeholder="••••••••" required minlength="6">
-                    </div>
-                    <div class="form-group" style="margin-bottom:1.5rem;">
-                        <label>Konfirmo Fjalëkalimin e Ri</label>
-                        <input type="password" id="confirmPassword" placeholder="••••••••" required minlength="6">
-                    </div>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Ndrysho Fjalëkalimin</button>
-                </form>
+                    <button class="btn btn-primary" id="syncNowBtn" onclick="triggerSync()" style="width:100%;">
+                        <i class="fas fa-sync-alt"></i> Sinkronizo Tani
+                    </button>
+                    <p style="font-size:.75rem;color:#9ca3af;margin-top:.75rem;text-align:center;">
+                        Shkarkon klientët dhe porositë e reja nga faqja online automatikisht.
+                    </p>
+                </div>
             </div>
         </div>`;
 
@@ -670,3 +730,24 @@ function renderSettings(el) {
         }
     });
 }
+
+window.triggerSync = async function() {
+    const btn = document.getElementById('syncNowBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Duke sinkronizuar...';
+    btn.disabled = true;
+    try {
+        const res = await api('/api/sync-now', { method: 'POST' });
+        if (res.success) {
+            const time = res.lastSync ? new Date(res.lastSync).toLocaleString('sq-AL') : 'Tani';
+            document.getElementById('lastSyncTime').textContent = time;
+            showNotification('Sinkronizimi u krye me sukses!');
+        } else {
+            alert(res.error || 'Gabim gjatë sinkronizimit');
+        }
+    } catch (e) {
+        alert('Gabim: ' + e.message);
+    } finally {
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sinkronizo Tani';
+        btn.disabled = false;
+    }
+};

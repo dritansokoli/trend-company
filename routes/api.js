@@ -206,10 +206,13 @@ function generateOrderNumber() {
 }
 
 router.post('/orders', (req, res) => {
-    const { customer_name, customer_email, customer_phone, customer_address, customer_city, customer_country, items, notes } = req.body;
+    const { customer_name, customer_email, customer_phone, customer_address, customer_city, customer_country, items, notes, payment_method } = req.body;
     if (!customer_name || !customer_email || !customer_phone || !items || !items.length) {
         return res.status(400).json({ error: 'Plotëso fushat e nevojshme' });
     }
+
+    const validPayment = ['cod', 'bank', 'card'];
+    const pm = validPayment.includes(payment_method) ? payment_method : 'cod';
 
     const db = getDb();
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -218,6 +221,7 @@ router.post('/orders', (req, res) => {
 
     const orderNumber = generateOrderNumber();
     const customerId = req.session?.customerId || null;
+    const paymentStatus = pm === 'card' ? 'awaiting' : 'unpaid';
 
     const updateStock = db.transaction(() => {
         for (const item of items) {
@@ -231,15 +235,25 @@ router.post('/orders', (req, res) => {
 
     try {
         const result = db.prepare(
-            'INSERT INTO orders (order_number, customer_id, customer_name, customer_email, customer_phone, customer_address, customer_city, customer_country, items, subtotal, shipping, total, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        ).run(orderNumber, customerId, customer_name, customer_email, customer_phone, customer_address || '', customer_city || '', customer_country || 'XK', JSON.stringify(items), subtotal, shipping, total, notes || '');
+            'INSERT INTO orders (order_number, customer_id, customer_name, customer_email, customer_phone, customer_address, customer_city, customer_country, items, subtotal, shipping, total, payment_method, payment_status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        ).run(orderNumber, customerId, customer_name, customer_email, customer_phone, customer_address || '', customer_city || '', customer_country || 'XK', JSON.stringify(items), subtotal, shipping, total, pm, paymentStatus, notes || '');
 
         updateStock();
 
-        res.json({ success: true, order_number: orderNumber, total });
+        res.json({ success: true, order_number: orderNumber, order_id: Number(result.lastInsertRowid), total, payment_method: pm });
     } catch (e) {
+        console.error('Order creation error:', e.message);
         res.status(500).json({ error: 'Gabim gjatë krijimit të porosisë' });
     }
+});
+
+router.patch('/orders/:id/payment', requireAdmin, (req, res) => {
+    const { payment_status } = req.body;
+    const valid = ['unpaid', 'paid', 'refunded'];
+    if (!valid.includes(payment_status)) return res.status(400).json({ error: 'Status i pavlefshëm' });
+    const db = getDb();
+    db.prepare('UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(payment_status, req.params.id);
+    res.json({ success: true });
 });
 
 router.get('/orders', requireAdmin, (req, res) => {
@@ -335,6 +349,27 @@ router.delete('/customers/:id', requireAdmin, (req, res) => {
     if (!c) return res.status(404).json({ error: 'Nuk u gjet' });
     db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id);
     res.json({ success: true });
+});
+
+// === MANUAL SYNC TRIGGER ===
+
+router.post('/sync-now', requireAdmin, async (req, res) => {
+    try {
+        const { syncFromOnline, getLastSync } = require('../auto-sync');
+        await syncFromOnline();
+        res.json({ success: true, lastSync: getLastSync() });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/sync-status', requireAdmin, (req, res) => {
+    try {
+        const { getLastSync } = require('../auto-sync');
+        res.json({ lastSync: getLastSync(), interval: parseInt(process.env.SYNC_INTERVAL) || 3 });
+    } catch (e) {
+        res.json({ lastSync: null, interval: 0 });
+    }
 });
 
 // === SYNC EXPORT (protected with token) ===

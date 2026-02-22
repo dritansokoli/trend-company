@@ -68,6 +68,9 @@ function initDatabase() {
             shipping REAL NOT NULL DEFAULT 0,
             total REAL NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'pending',
+            payment_method TEXT NOT NULL DEFAULT 'cod',
+            payment_status TEXT NOT NULL DEFAULT 'unpaid',
+            stripe_session_id TEXT DEFAULT '',
             notes TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -130,11 +133,23 @@ function initDatabase() {
             shipping REAL NOT NULL DEFAULT 0,
             total REAL NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'pending',
+            payment_method TEXT NOT NULL DEFAULT 'cod',
+            payment_status TEXT NOT NULL DEFAULT 'unpaid',
+            stripe_session_id TEXT DEFAULT '',
             notes TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
         console.log('Orders table created (migration)');
+    }
+
+    // Auto-migrate: add payment columns to orders if missing
+    const orderCols = db.prepare("PRAGMA table_info(orders)").all().map(c => c.name);
+    if (!orderCols.includes('payment_method')) {
+        db.exec("ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'cod'");
+        db.exec("ALTER TABLE orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'unpaid'");
+        db.exec("ALTER TABLE orders ADD COLUMN stripe_session_id TEXT DEFAULT ''");
+        console.log('Payment columns added to orders (migration)');
     }
 
     const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();

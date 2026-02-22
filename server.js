@@ -13,6 +13,9 @@ const PORT = process.env.PORT || 3000;
 
 initDatabase();
 
+const stripeRoutes = require('./routes/stripe');
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeRoutes);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -38,6 +41,7 @@ const customerRoutes = require('./routes/customers');
 const apiRoutes = require('./routes/api');
 app.use('/api/auth', authRoutes);
 app.use('/api/client', customerRoutes);
+app.use('/api/stripe', stripeRoutes);
 app.use('/api', apiRoutes);
 
 app.get('{*path}', (req, res) => {
@@ -53,4 +57,9 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`TREND COMPANY server running at http://localhost:${PORT}`);
     console.log(`Admin panel: http://localhost:${PORT}/admin.html`);
+
+    if (process.env.NODE_ENV !== 'production') {
+        const { startAutoSync } = require('./auto-sync');
+        startAutoSync();
+    }
 });
