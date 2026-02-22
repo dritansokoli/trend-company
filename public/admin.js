@@ -661,10 +661,13 @@ window.deleteCustomer = async function(id, name) {
 
 // SETTINGS
 async function renderSettings(el) {
-    let syncStatus = { lastSync: null, interval: 0, syncCount: 0, lastPush: null, lastPull: null };
-    try {
-        syncStatus = await api('/api/sync-status');
-    } catch {}
+    const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    let syncStatus = { lastSync: null, interval: 3, syncCount: 0, lastPush: null, lastPull: null };
+    if (isLocal) {
+        try {
+            syncStatus = await api('/api/sync-status');
+        } catch {}
+    }
 
     const lastSyncText = syncStatus.lastSync
         ? new Date(syncStatus.lastSync).toLocaleString('sq-AL')
@@ -722,6 +725,7 @@ async function renderSettings(el) {
             <div class="admin-table-wrapper">
                 <div class="table-header"><h2><i class="fas fa-sync-alt"></i> Sinkronizimi Dy-Drejtimësh</h2></div>
                 <div style="padding:1.5rem;">
+                    ${isLocal ? `
                     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
                         <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;">
                             <i class="fas fa-circle" style="color:${syncStatus.interval > 0 ? '#16a34a' : '#9ca3af'};font-size:.5rem;"></i>
@@ -751,6 +755,28 @@ async function renderSettings(el) {
                     <p style="font-size:.75rem;color:#9ca3af;margin-top:.75rem;text-align:center;">
                         Dërgon kategoritë, produktet, klientët dhe porositë nga lokali në internet dhe anasjelltas.
                     </p>
+                    ` : `
+                    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+                        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+                            <i class="fas fa-cloud" style="color:#3b82f6;font-size:1rem;"></i>
+                            <strong style="font-size:.9rem;">Serveri Online (Production)</strong>
+                        </div>
+                        <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">
+                            Ky është serveri online. Sinkronizimi automatik menaxhohet nga serveri lokal.
+                        </p>
+                        <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">
+                            Të dhënat (klientët, porositë) ruhen automatikisht gjatë çdo deploy-imi me <strong>sync.bat</strong>.
+                        </p>
+                    </div>
+                    <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:1rem;">
+                        <p style="font-size:.85rem;color:#92400e;margin-bottom:.3rem;"><i class="fas fa-info-circle"></i> <strong>Si funksionon:</strong></p>
+                        <ol style="font-size:.8rem;color:#92400e;padding-left:1.2rem;margin:0;">
+                            <li style="margin-bottom:.2rem;">Serveri lokal sinkronizon automatikisht çdo ${syncStatus.interval || 3} minuta</li>
+                            <li style="margin-bottom:.2rem;">Para deploy-imit, <strong>sync.bat</strong> eksporton të gjitha të dhënat</li>
+                            <li>Pas deploy-imit, serveri i ri ngarkon kategoritë, produktet, klientët dhe porositë</li>
+                        </ol>
+                    </div>
+                    `}
                 </div>
             </div>
         </div>`;
