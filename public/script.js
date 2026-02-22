@@ -364,7 +364,7 @@ function showNotification(msg) {
 // === AUTH ===
 async function checkClientAuth() {
     try {
-        const res = await fetch('/api/client/check');
+        const res = await fetch('/api/client/check', { credentials: 'include' });
         const data = await res.json();
         if (data.loggedIn) {
             clientUser = { name: data.name, email: data.email };
@@ -410,31 +410,54 @@ function setupAuthListeners() {
 
     document.getElementById('loginFormClient').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const res = await fetch('/api/client/login', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: document.getElementById('clientLoginEmail').value, password: document.getElementById('clientLoginPass').value })
-        });
-        const data = await res.json();
-        if (data.success) { clientUser = { name: data.name, email: data.email }; updateAuthUI(); showNotification('Mirë se erdhe, ' + data.name.split(' ')[0] + '!'); }
-        else alert(data.error || 'Gabim');
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.textContent = 'Duke u kyçur...';
+        btn.disabled = true;
+        try {
+            const res = await fetch('/api/client/login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email: document.getElementById('clientLoginEmail').value, password: document.getElementById('clientLoginPass').value })
+            });
+            const data = await res.json();
+            if (data.success) { clientUser = { name: data.name, email: data.email }; updateAuthUI(); showNotification('Mirë se erdhe, ' + data.name.split(' ')[0] + '!'); }
+            else alert(data.error || 'Gabim gjatë kyçjes');
+        } catch (err) {
+            alert('Gabim në lidhje me serverin. Provo përsëri.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     });
 
     document.getElementById('registerFormClient').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const body = {
-            first_name: document.getElementById('regFirstName').value,
-            last_name: document.getElementById('regLastName').value,
-            email: document.getElementById('regEmail').value,
-            password: document.getElementById('regPassword').value,
-            phone: document.getElementById('regPhone').value,
-            country: document.getElementById('regCountry').value,
-            city: document.getElementById('regCity').value,
-            address: document.getElementById('regAddress').value
-        };
-        const res = await fetch('/api/client/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        const data = await res.json();
-        if (data.success) { clientUser = { name: data.name, email: data.email }; updateAuthUI(); showNotification('Regjistrimi u krye me sukses!'); }
-        else alert(data.error || 'Gabim');
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.textContent = 'Duke u regjistruar...';
+        btn.disabled = true;
+        try {
+            const body = {
+                first_name: document.getElementById('regFirstName').value,
+                last_name: document.getElementById('regLastName').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                phone: document.getElementById('regPhone').value,
+                country: document.getElementById('regCountry').value,
+                city: document.getElementById('regCity').value,
+                address: document.getElementById('regAddress').value
+            };
+            const res = await fetch('/api/client/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
+            const data = await res.json();
+            if (data.success) { clientUser = { name: data.name, email: data.email }; updateAuthUI(); showNotification('Regjistrimi u krye me sukses!'); }
+            else alert(data.error || 'Gabim gjatë regjistrimit');
+        } catch (err) {
+            alert('Gabim në lidhje me serverin. Provo përsëri.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     });
 
     document.getElementById('regCountry').addEventListener('change', populateCities);
@@ -442,7 +465,7 @@ function setupAuthListeners() {
 }
 
 window.logoutClient = async function() {
-    await fetch('/api/client/logout', { method: 'POST' });
+    await fetch('/api/client/logout', { method: 'POST', credentials: 'include' });
     clientUser = null; updateAuthUI();
     showNotification('U çkyçët me sukses.');
 };

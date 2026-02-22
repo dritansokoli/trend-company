@@ -233,4 +233,28 @@ router.delete('/customers/:id', requireAdmin, (req, res) => {
     res.json({ success: true });
 });
 
+// === SYNC EXPORT (protected with token) ===
+
+router.get('/export', (req, res) => {
+    const token = req.headers['x-sync-token'] || req.query.token;
+    const serverToken = process.env.SYNC_TOKEN;
+    if (!serverToken || token !== serverToken) {
+        return res.status(403).json({ error: 'Token i pavlefshëm' });
+    }
+
+    const db = getDb();
+    const categories = db.prepare('SELECT * FROM categories ORDER BY id').all();
+    const products = db.prepare('SELECT * FROM products ORDER BY id').all().map(p => ({
+        ...p, features: JSON.parse(p.features || '[]')
+    }));
+    const customers = db.prepare('SELECT id, first_name, last_name, email, phone, country, city, address, created_at FROM customers ORDER BY id').all();
+
+    res.json({
+        exported_at: new Date().toISOString(),
+        categories,
+        products,
+        customers
+    });
+});
+
 module.exports = router;
