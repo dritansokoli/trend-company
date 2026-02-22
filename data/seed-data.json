@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-02-22T20:44:15.647Z",
+  "exported_at": "2026-02-22T21:10:25.590Z",
   "categories": [
     {
       "id": 1,
@@ -600,6 +600,64 @@
       "stock": 0,
       "stock_min": 5,
       "created_at": "2026-02-22 18:57:04"
+    }
+  ],
+  "customers": [
+    {
+      "id": 2,
+      "first_name": "Valon",
+      "last_name": "Haxhiveseli",
+      "email": "valonhaxhiveseli@gmail.com",
+      "password_hash": "---synced---",
+      "phone": "49750780",
+      "country": "XK",
+      "city": "Rahovec",
+      "address": "Rr. Xhelal Hajda - Toni, 2100",
+      "created_at": "2026-02-22 19:57:06"
+    },
+    {
+      "id": 3,
+      "first_name": "Dritan",
+      "last_name": "Sokoli",
+      "email": "dritansokoli@gmail.com",
+      "password_hash": "---synced---",
+      "phone": "44277261",
+      "country": "XK",
+      "city": "Rahovec",
+      "address": "Rr. Sadedin Hajda Nr.1",
+      "created_at": "2026-02-22 20:53:28"
+    }
+  ],
+  "orders": [
+    {
+      "id": 3,
+      "order_number": "TC-260222-8485",
+      "customer_id": 1,
+      "customer_name": "Dritan Sokoli",
+      "customer_email": "dritansokoli@gmail.com",
+      "customer_phone": "044277261",
+      "customer_address": "Rr. Sadedin Hajda Nr.1",
+      "customer_city": "Rahovec",
+      "customer_country": "XK",
+      "items": [
+        {
+          "id": 20,
+          "name": "Tavolinë Salloni Druri Natyral",
+          "price": 195,
+          "quantity": 1,
+          "image": ""
+        }
+      ],
+      "subtotal": 195,
+      "shipping": 0,
+      "total": 195,
+      "status": "pending",
+      "notes": "",
+      "created_at": "2026-02-22 20:54:03",
+      "updated_at": "2026-02-22 20:54:03",
+      "payment_method": "cod",
+      "payment_status": "unpaid",
+      "stripe_session_id": ""
     }
   ]
 }

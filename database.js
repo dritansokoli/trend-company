@@ -169,6 +169,11 @@ function initDatabase() {
             seedDefaultData(db);
             console.log('Default categories and products seeded');
         }
+    } else {
+        const seedPath = path.join(__dirname, 'data', 'seed-data.json');
+        if (fs.existsSync(seedPath)) {
+            restoreCustomersAndOrders(db, seedPath);
+        }
     }
 }
 
@@ -278,10 +283,62 @@ function importSeedData(db, seedPath) {
             insertProd.run(p.name, p.main_category_key, p.sub_category_key, p.price, p.type || 'standard',
                 p.description || '', p.icon || 'fa-box', features, p.image || '', p.stock || 0, p.stock_min || 5);
         }
+
+        importCustomersAndOrders(db, data);
     });
 
     importAll();
-    console.log(`Imported ${data.categories.length} categories, ${data.products.length} products`);
+    const custCount = (data.customers || []).length;
+    const ordCount = (data.orders || []).length;
+    console.log(`Imported ${data.categories.length} categories, ${data.products.length} products, ${custCount} customers, ${ordCount} orders`);
+}
+
+function importCustomersAndOrders(db, data) {
+    if (data.customers && data.customers.length > 0) {
+        const insertCust = db.prepare(
+            'INSERT OR IGNORE INTO customers (first_name, last_name, email, password_hash, phone, country, city, address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        for (const c of data.customers) {
+            insertCust.run(c.first_name, c.last_name, c.email, c.password_hash || '---synced---',
+                c.phone || '', c.country || 'XK', c.city || '', c.address || '', c.created_at || new Date().toISOString());
+        }
+    }
+
+    if (data.orders && data.orders.length > 0) {
+        const insertOrd = db.prepare(
+            'INSERT OR IGNORE INTO orders (order_number, customer_id, customer_name, customer_email, customer_phone, customer_address, customer_city, customer_country, items, subtotal, shipping, total, status, payment_method, payment_status, stripe_session_id, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        for (const o of data.orders) {
+            const itemsJson = Array.isArray(o.items) ? JSON.stringify(o.items) : (o.items || '[]');
+            insertOrd.run(o.order_number, o.customer_id || null, o.customer_name, o.customer_email,
+                o.customer_phone || '', o.customer_address || '', o.customer_city || '', o.customer_country || 'XK',
+                itemsJson, o.subtotal, o.shipping, o.total, o.status || 'pending',
+                o.payment_method || 'cod', o.payment_status || 'unpaid', o.stripe_session_id || '',
+                o.notes || '', o.created_at, o.updated_at);
+        }
+    }
+}
+
+function restoreCustomersAndOrders(db, seedPath) {
+    try {
+        const data = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+        if ((!data.customers || data.customers.length === 0) && (!data.orders || data.orders.length === 0)) return;
+
+        const custCount = db.prepare('SELECT COUNT(*) as c FROM customers').get().c;
+        const ordCount = db.prepare('SELECT COUNT(*) as c FROM orders').get().c;
+
+        if (custCount === 0 && data.customers && data.customers.length > 0) {
+            const restore = db.transaction(() => importCustomersAndOrders(db, data));
+            restore();
+            console.log(`Restored ${data.customers.length} customers, ${(data.orders || []).length} orders from seed-data.json`);
+        } else if (ordCount === 0 && data.orders && data.orders.length > 0) {
+            const restore = db.transaction(() => importCustomersAndOrders(db, { orders: data.orders }));
+            restore();
+            console.log(`Restored ${data.orders.length} orders from seed-data.json`);
+        }
+    } catch (e) {
+        console.log('Seed restore check skipped:', e.message);
+    }
 }
 
 module.exports = { getDb, initDatabase };

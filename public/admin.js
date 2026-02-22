@@ -661,7 +661,7 @@ window.deleteCustomer = async function(id, name) {
 
 // SETTINGS
 async function renderSettings(el) {
-    let syncStatus = { lastSync: null, interval: 0 };
+    let syncStatus = { lastSync: null, interval: 0, syncCount: 0, lastPush: null, lastPull: null };
     try {
         syncStatus = await api('/api/sync-status');
     } catch {}
@@ -669,6 +669,32 @@ async function renderSettings(el) {
     const lastSyncText = syncStatus.lastSync
         ? new Date(syncStatus.lastSync).toLocaleString('sq-AL')
         : 'Asnjëherë';
+
+    function formatStats(stats, type) {
+        if (!stats) return '<span style="color:#9ca3af;">Ende pa u ekzekutuar</span>';
+        if (type === 'push') {
+            const total = (stats.categories || 0) + (stats.products || 0) + (stats.customers || 0) + (stats.orders || 0);
+            if (total === 0 && (stats.updated || 0) === 0) return '<span style="color:#16a34a;">Asgjë e re</span>';
+            let parts = [];
+            if (stats.categories > 0) parts.push(`+${stats.categories} kategori`);
+            if (stats.products > 0) parts.push(`+${stats.products} produkte`);
+            if (stats.customers > 0) parts.push(`+${stats.customers} klientë`);
+            if (stats.orders > 0) parts.push(`+${stats.orders} porosi`);
+            if (stats.updated > 0) parts.push(`${stats.updated} përditësime`);
+            return `<span style="color:#16a34a;">${parts.join(', ')}</span>`;
+        }
+        if (type === 'pull') {
+            const total = (stats.newCategories || 0) + (stats.newProducts || 0) + (stats.newCustomers || 0) + (stats.newOrders || 0);
+            if (total === 0) return '<span style="color:#16a34a;">Asgjë e re</span>';
+            let parts = [];
+            if (stats.newCategories > 0) parts.push(`+${stats.newCategories} kategori`);
+            if (stats.newProducts > 0) parts.push(`+${stats.newProducts} produkte`);
+            if (stats.newCustomers > 0) parts.push(`+${stats.newCustomers} klientë`);
+            if (stats.newOrders > 0) parts.push(`+${stats.newOrders} porosi`);
+            return `<span style="color:#16a34a;">${parts.join(', ')}</span>`;
+        }
+        return '';
+    }
 
     el.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:900px;">
@@ -694,21 +720,36 @@ async function renderSettings(el) {
             </div>
 
             <div class="admin-table-wrapper">
-                <div class="table-header"><h2><i class="fas fa-sync-alt"></i> Sinkronizimi Online</h2></div>
+                <div class="table-header"><h2><i class="fas fa-sync-alt"></i> Sinkronizimi Dy-Drejtimësh</h2></div>
                 <div style="padding:1.5rem;">
                     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
-                        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+                        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;">
                             <i class="fas fa-circle" style="color:${syncStatus.interval > 0 ? '#16a34a' : '#9ca3af'};font-size:.5rem;"></i>
                             <strong style="font-size:.9rem;">${syncStatus.interval > 0 ? 'Aktiv' : 'Joaktiv'}</strong>
+                            <span style="font-size:.75rem;color:#9ca3af;margin-left:auto;">${syncStatus.syncCount || 0} sinkronizime</span>
                         </div>
-                        <p style="font-size:.85rem;color:#6b7280;">Intervali: çdo <strong>${syncStatus.interval}</strong> minuta</p>
-                        <p style="font-size:.85rem;color:#6b7280;">Sinkronizimi i fundit: <strong id="lastSyncTime">${lastSyncText}</strong></p>
+                        <p style="font-size:.85rem;color:#6b7280;margin-bottom:.3rem;">Intervali: çdo <strong>${syncStatus.interval}</strong> minuta</p>
+                        <p style="font-size:.85rem;color:#6b7280;margin-bottom:.75rem;">Fundit: <strong id="lastSyncTime">${lastSyncText}</strong></p>
+                        
+                        <div style="border-top:1px solid #e5e7eb;padding-top:.75rem;">
+                            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
+                                <i class="fas fa-arrow-up" style="color:#3b82f6;font-size:.75rem;"></i>
+                                <span style="font-size:.8rem;font-weight:600;">Local → Online:</span>
+                            </div>
+                            <p style="font-size:.8rem;color:#6b7280;margin-left:1.2rem;margin-bottom:.5rem;" id="pushStatsText">${formatStats(syncStatus.lastPush, 'push')}</p>
+                            
+                            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
+                                <i class="fas fa-arrow-down" style="color:#8b5cf6;font-size:.75rem;"></i>
+                                <span style="font-size:.8rem;font-weight:600;">Online → Local:</span>
+                            </div>
+                            <p style="font-size:.8rem;color:#6b7280;margin-left:1.2rem;" id="pullStatsText">${formatStats(syncStatus.lastPull, 'pull')}</p>
+                        </div>
                     </div>
                     <button class="btn btn-primary" id="syncNowBtn" onclick="triggerSync()" style="width:100%;">
-                        <i class="fas fa-sync-alt"></i> Sinkronizo Tani
+                        <i class="fas fa-sync-alt"></i> Sinkronizo Tani (Dy-Drejtimësh)
                     </button>
                     <p style="font-size:.75rem;color:#9ca3af;margin-top:.75rem;text-align:center;">
-                        Shkarkon klientët dhe porositë e reja nga faqja online automatikisht.
+                        Dërgon kategoritë, produktet, klientët dhe porositë nga lokali në internet dhe anasjelltas.
                     </p>
                 </div>
             </div>
@@ -740,14 +781,15 @@ window.triggerSync = async function() {
         if (res.success) {
             const time = res.lastSync ? new Date(res.lastSync).toLocaleString('sq-AL') : 'Tani';
             document.getElementById('lastSyncTime').textContent = time;
-            showNotification('Sinkronizimi u krye me sukses!');
+            showNotification('Sinkronizimi dy-drejtimësh u krye me sukses!');
+            setTimeout(() => loadPage('settings'), 1000);
         } else {
             alert(res.error || 'Gabim gjatë sinkronizimit');
         }
     } catch (e) {
         alert('Gabim: ' + e.message);
     } finally {
-        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sinkronizo Tani';
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sinkronizo Tani (Dy-Drejtimësh)';
         btn.disabled = false;
     }
 };
