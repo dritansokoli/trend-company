@@ -37,7 +37,7 @@ const authRoutes = require('./routes/auth');
 const customerRoutes = require('./routes/customers');
 const apiRoutes = require('./routes/api');
 app.use('/api/auth', authRoutes);
-app.use('/api/customers', customerRoutes);
+app.use('/api/client', customerRoutes);
 app.use('/api', apiRoutes);
 
 app.get('{*path}', (req, res) => {

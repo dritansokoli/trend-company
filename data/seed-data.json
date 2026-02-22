@@ -1,0 +1,605 @@
+{
+  "exported_at": "2026-02-22T19:17:39.938Z",
+  "categories": [
+    {
+      "id": 1,
+      "key": "dyer",
+      "name": "Dyer",
+      "icon": "fa-door-open",
+      "parent_id": null,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 2,
+      "key": "brendshme",
+      "name": "Brendshme",
+      "icon": "fa-door-closed",
+      "parent_id": 1,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 3,
+      "key": "jashtme",
+      "name": "Jashtme",
+      "icon": "fa-door-open",
+      "parent_id": 1,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 4,
+      "key": "blinduar",
+      "name": "Blinduara",
+      "icon": "fa-shield-halved",
+      "parent_id": 1,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 5,
+      "key": "rrëshqitëse",
+      "name": "Rrëshqitëse",
+      "icon": "fa-arrows-left-right",
+      "parent_id": 1,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 6,
+      "key": "laminat",
+      "name": "Laminat",
+      "icon": "fa-layer-group",
+      "parent_id": null,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 7,
+      "key": "laminat-druri",
+      "name": "Laminat Druri",
+      "icon": "fa-tree",
+      "parent_id": 6,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 8,
+      "key": "laminat-modern",
+      "name": "Laminat Modern",
+      "icon": "fa-palette",
+      "parent_id": 6,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 9,
+      "key": "laminat-standard",
+      "name": "Laminat Standard",
+      "icon": "fa-layer-group",
+      "parent_id": 6,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 10,
+      "key": "mobilje",
+      "name": "Mobilje",
+      "icon": "fa-couch",
+      "parent_id": null,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 11,
+      "key": "gardëroba",
+      "name": "Gardëroba",
+      "icon": "fa-box-open",
+      "parent_id": 10,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 12,
+      "key": "krevate",
+      "name": "Krevate",
+      "icon": "fa-bed",
+      "parent_id": 10,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 13,
+      "key": "komodina",
+      "name": "Komodina",
+      "icon": "fa-box-open",
+      "parent_id": 10,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 14,
+      "key": "rafte",
+      "name": "Rafte & Dollape",
+      "icon": "fa-tv",
+      "parent_id": 10,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 15,
+      "key": "tavolina-kuzhine",
+      "name": "Tavolina Kuzhine",
+      "icon": "fa-utensils",
+      "parent_id": null,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 16,
+      "key": "tk-druri",
+      "name": "Druri",
+      "icon": "fa-tree",
+      "parent_id": 15,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 17,
+      "key": "tk-moderne",
+      "name": "Moderne",
+      "icon": "fa-utensils",
+      "parent_id": 15,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 18,
+      "key": "tk-set",
+      "name": "Set Komplet",
+      "icon": "fa-chair",
+      "parent_id": 15,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 19,
+      "key": "tavolina-salloni",
+      "name": "Tavolina Salloni",
+      "icon": "fa-mug-hot",
+      "parent_id": null,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 20,
+      "key": "ts-xham",
+      "name": "Xham",
+      "icon": "fa-wine-glass",
+      "parent_id": 19,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 21,
+      "key": "ts-druri",
+      "name": "Druri",
+      "icon": "fa-tree",
+      "parent_id": 19,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 22,
+      "key": "ts-moderne",
+      "name": "Moderne",
+      "icon": "fa-couch",
+      "parent_id": 19,
+      "created_at": "2026-02-22 18:57:04"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "Derë e Brendshme Premium Laminat",
+      "main_category_key": "dyer",
+      "sub_category_key": "brendshme",
+      "price": 189,
+      "type": "premium",
+      "description": "Derë e brendshme premium me laminat të cilësisë së lartë.",
+      "icon": "fa-door-closed",
+      "features": [
+        "Laminat premium",
+        "80x200 cm",
+        "40 mm",
+        "Kornizë alumini",
+        "Izolim akustik"
+      ],
+      "image": "",
+      "stock": 15,
+      "stock_min": 5,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 2,
+      "name": "Derë e Brendshme Klasike Druri",
+      "main_category_key": "dyer",
+      "sub_category_key": "brendshme",
+      "price": 145,
+      "type": "standard",
+      "description": "Derë klasike prej druri natyror me përfundim elegant.",
+      "icon": "fa-door-closed",
+      "features": [
+        "Dru natyral",
+        "80x200 cm",
+        "35 mm",
+        "Përfundim me llak",
+        "Rezistente"
+      ],
+      "image": "",
+      "stock": 22,
+      "stock_min": 5,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 3,
+      "name": "Derë e Blinduar Siguria Maksimale",
+      "main_category_key": "dyer",
+      "sub_category_key": "blinduar",
+      "price": 890,
+      "type": "premium",
+      "description": "Derë e blinduar me nivel të lartë sigurie.",
+      "icon": "fa-shield-halved",
+      "features": [
+        "Çelik i fortifikuar",
+        "Bravë multicenter",
+        "Klasë sigurie 4",
+        "Izolim termik"
+      ],
+      "image": "",
+      "stock": 5,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 4,
+      "name": "Derë e Blinduar Elegante",
+      "main_category_key": "dyer",
+      "sub_category_key": "blinduar",
+      "price": 1250,
+      "type": "premium",
+      "description": "Derë e blinduar ekskluzive me dizajn elegant.",
+      "icon": "fa-shield-halved",
+      "features": [
+        "Çelik inox",
+        "Bravë elektronike",
+        "Klasë sigurie 5",
+        "Izolim akustik"
+      ],
+      "image": "",
+      "stock": 3,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 5,
+      "name": "Derë e Jashtme PVC me Xham",
+      "main_category_key": "dyer",
+      "sub_category_key": "jashtme",
+      "price": 420,
+      "type": "premium",
+      "description": "Derë e jashtme PVC me xham dekorativ.",
+      "icon": "fa-door-open",
+      "features": [
+        "PVC 5-dhomësh",
+        "Xham dyshtresor",
+        "Rezistente ndaj motit",
+        "Izolim termik"
+      ],
+      "image": "",
+      "stock": 8,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 6,
+      "name": "Derë e Jashtme Alumini",
+      "main_category_key": "dyer",
+      "sub_category_key": "jashtme",
+      "price": 580,
+      "type": "premium",
+      "description": "Derë hyrëse prej alumini me dizajn modern.",
+      "icon": "fa-door-open",
+      "features": [
+        "Alumin premium",
+        "Izolim termik",
+        "Rezistente UV",
+        "Dorezë e integruar"
+      ],
+      "image": "",
+      "stock": 6,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 7,
+      "name": "Derë Rrëshqitëse me Xham",
+      "main_category_key": "dyer",
+      "sub_category_key": "rrëshqitëse",
+      "price": 650,
+      "type": "premium",
+      "description": "Derë rrëshqitëse me xham të temperuar.",
+      "icon": "fa-arrows-left-right",
+      "features": [
+        "Xham 8mm",
+        "Sistem silent",
+        "90x210 cm",
+        "Dizajn minimalist"
+      ],
+      "image": "",
+      "stock": 4,
+      "stock_min": 2,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 8,
+      "name": "Derë Rrëshqitëse në Mur",
+      "main_category_key": "dyer",
+      "sub_category_key": "rrëshqitëse",
+      "price": 350,
+      "type": "standard",
+      "description": "Derë rrëshqitëse që futet brenda murit.",
+      "icon": "fa-arrows-left-right",
+      "features": [
+        "Sistem brenda murit",
+        "Laminat cilësor",
+        "Kursim hapësire"
+      ],
+      "image": "",
+      "stock": 0,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 9,
+      "name": "Laminat Druri Lisi AC5 8mm",
+      "main_category_key": "laminat",
+      "sub_category_key": "laminat-druri",
+      "price": 12,
+      "type": "premium",
+      "description": "Laminat premium me pamje druri lisi natyral.",
+      "icon": "fa-layer-group",
+      "features": [
+        "AC5",
+        "8mm",
+        "Druri lisi",
+        "Rezistent lagështirës",
+        "Sistem click"
+      ],
+      "image": "",
+      "stock": 250,
+      "stock_min": 50,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 10,
+      "name": "Laminat Gri Modern AC5 10mm",
+      "main_category_key": "laminat",
+      "sub_category_key": "laminat-modern",
+      "price": 16,
+      "type": "premium",
+      "description": "Laminat modern me ngjyrë gri elegante.",
+      "icon": "fa-layer-group",
+      "features": [
+        "AC5",
+        "10mm",
+        "Gri moderne",
+        "Izolim akustik",
+        "Antistatik"
+      ],
+      "image": "",
+      "stock": 180,
+      "stock_min": 50,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 11,
+      "name": "Laminat Druri Arrë AC4 8mm",
+      "main_category_key": "laminat",
+      "sub_category_key": "laminat-standard",
+      "price": 10,
+      "type": "standard",
+      "description": "Laminat me pamje druri arrë me nuancë të ngrohtë.",
+      "icon": "fa-layer-group",
+      "features": [
+        "AC4",
+        "8mm",
+        "Druri arrë",
+        "Rezistent UV"
+      ],
+      "image": "",
+      "stock": 30,
+      "stock_min": 50,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 12,
+      "name": "Gardërobë Moderne me Dyer Rrëshqitëse",
+      "main_category_key": "mobilje",
+      "sub_category_key": "gardëroba",
+      "price": 680,
+      "type": "premium",
+      "description": "Gardërobë e gjerë me dyer rrëshqitëse dhe pasqyrë.",
+      "icon": "fa-box-open",
+      "features": [
+        "Dyer rrëshqitëse",
+        "200x220x60 cm",
+        "MDF premium",
+        "Silent-close"
+      ],
+      "image": "",
+      "stock": 7,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 13,
+      "name": "Krevat Dyshek 160x200 me Magazinë",
+      "main_category_key": "mobilje",
+      "sub_category_key": "krevate",
+      "price": 520,
+      "type": "premium",
+      "description": "Krevat modern me hapësirë magazinimi.",
+      "icon": "fa-bed",
+      "features": [
+        "160x200 cm",
+        "Magazinë nën dyshek",
+        "Mekanizëm hidraulik"
+      ],
+      "image": "",
+      "stock": 10,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 14,
+      "name": "Komodë me 4 Sirtar Druri",
+      "main_category_key": "mobilje",
+      "sub_category_key": "komodina",
+      "price": 245,
+      "type": "standard",
+      "description": "Komodë elegante me 4 sirtarë prej druri.",
+      "icon": "fa-box-open",
+      "features": [
+        "4 sirtarë",
+        "80x100x45 cm",
+        "Dru natyral",
+        "Doreza metalike"
+      ],
+      "image": "",
+      "stock": 12,
+      "stock_min": 5,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 15,
+      "name": "Dollap TV Modern 180cm",
+      "main_category_key": "mobilje",
+      "sub_category_key": "rafte",
+      "price": 390,
+      "type": "premium",
+      "description": "Dollap TV modern me dritë LED.",
+      "icon": "fa-tv",
+      "features": [
+        "180 cm",
+        "Dritë LED",
+        "Hapësirë kabllo",
+        "Laminat premium"
+      ],
+      "image": "",
+      "stock": 9,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 16,
+      "name": "Tavolinë Kuzhine Druri 120x80cm",
+      "main_category_key": "tavolina-kuzhine",
+      "sub_category_key": "tk-druri",
+      "price": 280,
+      "type": "standard",
+      "description": "Tavolinë kuzhine prej druri masiv.",
+      "icon": "fa-utensils",
+      "features": [
+        "Dru masiv lisi",
+        "120x80 cm",
+        "4-6 persona",
+        "Llak natyral"
+      ],
+      "image": "",
+      "stock": 14,
+      "stock_min": 5,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 17,
+      "name": "Tavolinë Kuzhine e Zgjatshme",
+      "main_category_key": "tavolina-kuzhine",
+      "sub_category_key": "tk-moderne",
+      "price": 450,
+      "type": "premium",
+      "description": "Tavolinë kuzhine me zgjerim 140-180cm.",
+      "icon": "fa-utensils",
+      "features": [
+        "140-180 cm",
+        "6-8 persona",
+        "MDF premium",
+        "Këmbë metalike"
+      ],
+      "image": "",
+      "stock": 2,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 18,
+      "name": "Set Tavolinë + 4 Karrige",
+      "main_category_key": "tavolina-kuzhine",
+      "sub_category_key": "tk-set",
+      "price": 590,
+      "type": "premium",
+      "description": "Set komplet tavolinë me 4 karrige skandinave.",
+      "icon": "fa-chair",
+      "features": [
+        "120x80 cm",
+        "4 karrige",
+        "Stil skandinav",
+        "Dru + metal"
+      ],
+      "image": "",
+      "stock": 6,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 19,
+      "name": "Tavolinë Salloni Ovale Xham",
+      "main_category_key": "tavolina-salloni",
+      "sub_category_key": "ts-xham",
+      "price": 320,
+      "type": "premium",
+      "description": "Tavolinë salloni ovale me xham të temperuar.",
+      "icon": "fa-couch",
+      "features": [
+        "Xham 10mm",
+        "Ovale",
+        "Bazë metalike ari",
+        "110x60 cm"
+      ],
+      "image": "",
+      "stock": 11,
+      "stock_min": 3,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 20,
+      "name": "Tavolinë Salloni Druri Natyral",
+      "main_category_key": "tavolina-salloni",
+      "sub_category_key": "ts-druri",
+      "price": 195,
+      "type": "standard",
+      "description": "Tavolinë salloni prej druri natyral.",
+      "icon": "fa-couch",
+      "features": [
+        "Dru lisi",
+        "100x55 cm",
+        "Raft shtesë",
+        "Vaj druri"
+      ],
+      "image": "",
+      "stock": 18,
+      "stock_min": 5,
+      "created_at": "2026-02-22 18:57:04"
+    },
+    {
+      "id": 21,
+      "name": "Tavolinë Salloni Moderne E Zezë",
+      "main_category_key": "tavolina-salloni",
+      "sub_category_key": "ts-moderne",
+      "price": 275,
+      "type": "premium",
+      "description": "Tavolinë salloni moderne e zezë mat.",
+      "icon": "fa-couch",
+      "features": [
+        "E zezë mat",
+        "90x90 cm",
+        "Dizajn gjeometrik",
+        "Me raft"
+      ],
+      "image": "",
+      "stock": 0,
+      "stock_min": 5,
+      "created_at": "2026-02-22 18:57:04"
+    }
+  ]
+}

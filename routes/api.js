@@ -206,7 +206,31 @@ router.get('/stats', requireAdmin, (req, res) => {
     const outOfStock = db.prepare('SELECT COUNT(*) as c FROM products WHERE stock = 0').get().c;
     const lowStock = db.prepare('SELECT COUNT(*) as c FROM products WHERE stock > 0 AND stock <= stock_min').get().c;
     const stockValue = db.prepare('SELECT SUM(stock * price) as v FROM products').get().v || 0;
-    res.json({ totalCats, totalSubs, totalProds, avgPrice, totalStock, outOfStock, lowStock, stockValue });
+    const totalCustomers = db.prepare('SELECT COUNT(*) as c FROM customers').get().c;
+    res.json({ totalCats, totalSubs, totalProds, avgPrice, totalStock, outOfStock, lowStock, stockValue, totalCustomers });
+});
+
+// === CUSTOMERS (admin) ===
+
+router.get('/customers', requireAdmin, (req, res) => {
+    const db = getDb();
+    const customers = db.prepare('SELECT id, first_name, last_name, email, phone, country, city, address, created_at FROM customers ORDER BY id DESC').all();
+    res.json(customers);
+});
+
+router.get('/customers/:id', requireAdmin, (req, res) => {
+    const db = getDb();
+    const c = db.prepare('SELECT id, first_name, last_name, email, phone, country, city, address, created_at FROM customers WHERE id = ?').get(req.params.id);
+    if (!c) return res.status(404).json({ error: 'Nuk u gjet' });
+    res.json(c);
+});
+
+router.delete('/customers/:id', requireAdmin, (req, res) => {
+    const db = getDb();
+    const c = db.prepare('SELECT id FROM customers WHERE id = ?').get(req.params.id);
+    if (!c) return res.status(404).json({ error: 'Nuk u gjet' });
+    db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
 });
 
 module.exports = router;

@@ -16,10 +16,10 @@ async function loadData() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    setupNav();
     const auth = await api('/api/auth/check');
     if (auth.loggedIn) showAdmin();
     else showLogin();
-    setupNav();
 });
 
 function showLogin() {
@@ -30,7 +30,22 @@ function showLogin() {
 function showAdmin() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminWrapper').style.display = 'flex';
+    setupSidebarLinks();
     loadPage('dashboard');
+}
+
+function setupSidebarLinks() {
+    document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
+        link.replaceWith(link.cloneNode(true));
+    });
+    document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.sidebar-link[data-page]').forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            loadPage(link.dataset.page);
+        });
+    });
 }
 
 function setupNav() {
@@ -64,14 +79,17 @@ async function loadPage(page) {
     currentPage = page;
     const content = document.getElementById('adminContent');
     const title = document.getElementById('pageTitle');
+    content.innerHTML = '<div style="text-align:center;padding:3rem;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#9ca3af;"></i></div>';
     await loadData();
     switch(page) {
-        case 'dashboard': title.textContent = 'Dashboard'; renderDashboard(content); break;
+        case 'dashboard': title.textContent = 'Dashboard'; await renderDashboard(content); break;
         case 'categories': title.textContent = 'Kategoritë'; renderCategories(content); break;
         case 'subcategories': title.textContent = 'Nën-Kategoritë'; renderSubcategories(content); break;
         case 'products': title.textContent = 'Produktet'; renderProductsPage(content); break;
         case 'stock': title.textContent = 'Menaxhimi i Stokut'; renderStockPage(content); break;
         case 'orders': title.textContent = 'Porositë'; renderOrders(content); break;
+        case 'customers': title.textContent = 'Klientët'; await renderCustomers(content); break;
+        case 'settings': title.textContent = 'Cilësimet'; renderSettings(content); break;
     }
 }
 
@@ -84,6 +102,7 @@ async function renderDashboard(el) {
             <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-folder-open"></i></div><div class="stat-info"><h3>${stats.totalSubs}</h3><p>Nën-Kategori</p></div></div>
             <div class="stat-card"><div class="stat-icon green"><i class="fas fa-box"></i></div><div class="stat-info"><h3>${stats.totalProds}</h3><p>Produkte</p></div></div>
             <div class="stat-card"><div class="stat-icon yellow"><i class="fas fa-euro-sign"></i></div><div class="stat-info"><h3>€${Number(stats.avgPrice).toFixed(2)}</h3><p>Çmimi mesatar</p></div></div>
+            <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-info"><h3>${stats.totalCustomers || 0}</h3><p>Klientë</p></div></div>
         </div>
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-icon green"><i class="fas fa-warehouse"></i></div><div class="stat-info"><h3>${stats.totalStock}</h3><p>Totali i Stokut</p></div></div>
@@ -407,4 +426,102 @@ window.quickRestock = async function(id) {
 
 function renderOrders(el) {
     el.innerHTML = '<div class="admin-table-wrapper"><div class="table-header"><h2>Porositë</h2></div><div class="empty-state"><i class="fas fa-shopping-bag"></i><p>Porositë do të shfaqen këtu.</p></div></div>';
+}
+
+// CUSTOMERS
+async function renderCustomers(el) {
+    let customers = [];
+    try {
+        const res = await fetch('/api/customers');
+        const data = await res.json();
+        if (Array.isArray(data)) customers = data;
+        else console.log('Customers API response:', data);
+    } catch (e) { console.log('Customers API error:', e); }
+    const countryNames = { XK:'Kosovë', AL:'Shqipëri', MK:'Maqedoni', ME:'Mal i Zi', DE:'Gjermani', CH:'Zvicër', AT:'Austri', OTHER:'Tjetër' };
+
+    el.innerHTML = `
+        <div class="stats-grid" style="margin-bottom:1.5rem;">
+            <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-info"><h3>${customers.length}</h3><p>Klientë Gjithsej</p></div></div>
+            <div class="stat-card"><div class="stat-icon green"><i class="fas fa-user-plus"></i></div><div class="stat-info"><h3>${customers.filter(c => { const d = new Date(c.created_at); const now = new Date(); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length}</h3><p>Klientë të Rinj (këtë muaj)</p></div></div>
+        </div>
+        <div class="admin-table-wrapper">
+            <div class="table-header"><h2><i class="fas fa-users"></i> Klientët e Regjistruar</h2></div>
+            <table class="admin-table"><thead><tr><th>#</th><th>Emri</th><th>Email</th><th>Telefoni</th><th>Lokacioni</th><th>Adresa</th><th>Regjistruar</th><th>Veprime</th></tr></thead><tbody>
+                ${customers.map((c, i) => `<tr>
+                    <td>${i + 1}</td>
+                    <td><strong>${c.first_name} ${c.last_name}</strong></td>
+                    <td><a href="mailto:${c.email}" style="color:var(--primary)">${c.email}</a></td>
+                    <td>${c.phone ? `<a href="tel:${c.phone}" style="color:inherit">${c.phone}</a>` : '<span style="color:#9ca3af">-</span>'}</td>
+                    <td>${c.city ? c.city + ', ' : ''}${countryNames[c.country] || c.country || '-'}</td>
+                    <td>${c.address || '<span style="color:#9ca3af">-</span>'}</td>
+                    <td><small>${new Date(c.created_at).toLocaleDateString('sq-AL')}</small></td>
+                    <td class="actions">
+                        <button class="btn btn-outline btn-sm" onclick="viewCustomer(${c.id})" title="Shiko detajet"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteCustomer(${c.id},'${c.first_name} ${c.last_name}')" title="Fshi"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`).join('')}
+            </tbody></table>
+            ${customers.length === 0 ? '<div class="empty-state"><i class="fas fa-users"></i><p>Nuk ka klientë të regjistruar ende.</p></div>' : ''}
+        </div>`;
+}
+
+window.viewCustomer = async function(id) {
+    const c = await api('/api/customers/' + id);
+    if (!c.id) return;
+    const countryNames = { XK:'Kosovë', AL:'Shqipëri', MK:'Maqedoni', ME:'Mal i Zi', DE:'Gjermani', CH:'Zvicër', AT:'Austri' };
+    alert(
+        `Klienti: ${c.first_name} ${c.last_name}\n` +
+        `Email: ${c.email}\n` +
+        `Telefon: ${c.phone || '-'}\n` +
+        `Lokacioni: ${c.city || '-'}, ${countryNames[c.country] || c.country || '-'}\n` +
+        `Adresa: ${c.address || '-'}\n` +
+        `Regjistruar: ${new Date(c.created_at).toLocaleDateString('sq-AL')}`
+    );
+};
+
+window.deleteCustomer = async function(id, name) {
+    if (!confirm(`Jeni i sigurt që doni të fshini klientin "${name}"?\n\nKjo veprim nuk mund të kthehet.`)) return;
+    await api('/api/customers/' + id, { method: 'DELETE' });
+    loadPage('customers');
+};
+
+// SETTINGS
+function renderSettings(el) {
+    el.innerHTML = `
+        <div class="admin-table-wrapper" style="max-width:500px;">
+            <div class="table-header"><h2><i class="fas fa-lock"></i> Ndrysho Fjalëkalimin</h2></div>
+            <div style="padding:1.5rem;">
+                <form id="changePasswordForm">
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label>Fjalëkalimi Aktual</label>
+                        <input type="password" id="oldPassword" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label>Fjalëkalimi i Ri</label>
+                        <input type="password" id="newPassword" placeholder="••••••••" required minlength="6">
+                    </div>
+                    <div class="form-group" style="margin-bottom:1.5rem;">
+                        <label>Konfirmo Fjalëkalimin e Ri</label>
+                        <input type="password" id="confirmPassword" placeholder="••••••••" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Ndrysho Fjalëkalimin</button>
+                </form>
+            </div>
+        </div>`;
+
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const oldPass = document.getElementById('oldPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const confirmPass = document.getElementById('confirmPassword').value;
+        if (newPass !== confirmPass) { alert('Fjalëkalimet e reja nuk përputhen!'); return; }
+        if (newPass.length < 6) { alert('Fjalëkalimi duhet të ketë së paku 6 karaktere!'); return; }
+        const res = await api('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass }) });
+        if (res.success) {
+            alert('Fjalëkalimi u ndryshua me sukses!');
+            document.getElementById('changePasswordForm').reset();
+        } else {
+            alert(res.error || 'Gabim gjatë ndryshimit të fjalëkalimit');
+        }
+    });
 }

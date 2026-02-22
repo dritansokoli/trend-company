@@ -87,6 +87,13 @@ function btn(filter, type, icon, label, active) {
     return b;
 }
 
+function scrollToProducts() {
+    const grid = document.getElementById('productsGrid');
+    if (grid) {
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
 function attachCategoryListeners() {
     document.querySelectorAll('.category-btn').forEach(b => {
         b.addEventListener('click', async () => {
@@ -97,6 +104,7 @@ function attachCategoryListeners() {
                 buildMainCategoryButtons();
                 renderProducts(products);
                 updateCategoryTitle('Kërko Produkte', 'Zgjidh kategorinë për të parë produktet e disponueshme');
+                scrollToProducts();
                 return;
             }
             document.querySelectorAll('.category-btn').forEach(x => x.classList.remove('active'));
@@ -123,6 +131,7 @@ function attachCategoryListeners() {
                 await loadProducts({ subCategory: filter });
                 renderProducts(products);
             }
+            scrollToProducts();
         });
     });
 }
@@ -171,7 +180,7 @@ function setupEventListeners() {
                 renderProducts(products);
                 updateCategoryTitle(cat.name, `Zgjidh nën-kategorinë e ${cat.name.toLowerCase()}`);
             }
-            document.querySelector('#products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            scrollToProducts();
         });
     });
 
@@ -355,7 +364,7 @@ function showNotification(msg) {
 // === AUTH ===
 async function checkClientAuth() {
     try {
-        const res = await fetch('/api/customers/check');
+        const res = await fetch('/api/client/check');
         const data = await res.json();
         if (data.loggedIn) {
             clientUser = { name: data.name, email: data.email };
@@ -401,7 +410,7 @@ function setupAuthListeners() {
 
     document.getElementById('loginFormClient').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const res = await fetch('/api/customers/login', {
+        const res = await fetch('/api/client/login', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: document.getElementById('clientLoginEmail').value, password: document.getElementById('clientLoginPass').value })
         });
@@ -422,7 +431,7 @@ function setupAuthListeners() {
             city: document.getElementById('regCity').value,
             address: document.getElementById('regAddress').value
         };
-        const res = await fetch('/api/customers/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const res = await fetch('/api/client/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) { clientUser = { name: data.name, email: data.email }; updateAuthUI(); showNotification('Regjistrimi u krye me sukses!'); }
         else alert(data.error || 'Gabim');
@@ -433,7 +442,7 @@ function setupAuthListeners() {
 }
 
 window.logoutClient = async function() {
-    await fetch('/api/customers/logout', { method: 'POST' });
+    await fetch('/api/client/logout', { method: 'POST' });
     clientUser = null; updateAuthUI();
     showNotification('U çkyçët me sukses.');
 };

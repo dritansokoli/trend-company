@@ -74,6 +74,24 @@ function initDatabase() {
         db.exec('ALTER TABLE products ADD COLUMN stock_min INTEGER NOT NULL DEFAULT 5');
     }
 
+    // Auto-migrate: ensure customers table exists
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='customers'").get();
+    if (!tables) {
+        db.exec(`CREATE TABLE customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            phone TEXT DEFAULT '',
+            country TEXT DEFAULT 'XK',
+            city TEXT DEFAULT '',
+            address TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        console.log('Customers table created (migration)');
+    }
+
     const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
     if (userCount.count === 0) {
         const hash = bcrypt.hashSync('admin123', 10);
@@ -83,8 +101,14 @@ function initDatabase() {
 
     const catCount = db.prepare('SELECT COUNT(*) as count FROM categories').get();
     if (catCount.count === 0) {
-        seedDefaultData(db);
-        console.log('Default categories and products seeded');
+        const seedPath = path.join(__dirname, 'data', 'seed-data.json');
+        if (fs.existsSync(seedPath)) {
+            importSeedData(db, seedPath);
+            console.log('Data imported from seed-data.json');
+        } else {
+            seedDefaultData(db);
+            console.log('Default categories and products seeded');
+        }
     }
 }
 
@@ -163,6 +187,41 @@ function seedDefaultData(db) {
         }
     });
     insertProds();
+}
+
+function importSeedData(db, seedPath) {
+    const data = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+
+    const insertCat = db.prepare('INSERT INTO categories (key, name, icon, parent_id) VALUES (?, ?, ?, ?)');
+    const insertProd = db.prepare(
+        'INSERT INTO products (name, main_category_key, sub_category_key, price, type, description, icon, features, image, stock, stock_min) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+
+    const importAll = db.transaction(() => {
+        const idMap = {};
+
+        const mainCats = data.categories.filter(c => c.parent_id === null);
+        const subCats = data.categories.filter(c => c.parent_id !== null);
+
+        for (const cat of mainCats) {
+            const result = insertCat.run(cat.key, cat.name, cat.icon, null);
+            idMap[cat.id] = result.lastInsertRowid;
+        }
+
+        for (const sub of subCats) {
+            const newParentId = idMap[sub.parent_id] || null;
+            insertCat.run(sub.key, sub.name, sub.icon, newParentId);
+        }
+
+        for (const p of data.products) {
+            const features = typeof p.features === 'string' ? p.features : JSON.stringify(p.features || []);
+            insertProd.run(p.name, p.main_category_key, p.sub_category_key, p.price, p.type || 'standard',
+                p.description || '', p.icon || 'fa-box', features, p.image || '', p.stock || 0, p.stock_min || 5);
+        }
+    });
+
+    importAll();
+    console.log(`Imported ${data.categories.length} categories, ${data.products.length} products`);
 }
 
 module.exports = { getDb, initDatabase };
