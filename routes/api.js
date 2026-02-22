@@ -194,6 +194,106 @@ router.delete('/products/:id', requireAdmin, (req, res) => {
     res.json({ success: true });
 });
 
+// === ORDERS ===
+
+function generateOrderNumber() {
+    const now = new Date();
+    const y = now.getFullYear().toString().slice(-2);
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const rand = Math.floor(Math.random() * 9000) + 1000;
+    return `TC-${y}${m}${d}-${rand}`;
+}
+
+router.post('/orders', (req, res) => {
+    const { customer_name, customer_email, customer_phone, customer_address, customer_city, customer_country, items, notes } = req.body;
+    if (!customer_name || !customer_email || !customer_phone || !items || !items.length) {
+        return res.status(400).json({ error: 'Plotëso fushat e nevojshme' });
+    }
+
+    const db = getDb();
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const shipping = subtotal >= 100 ? 0 : 5;
+    const total = subtotal + shipping;
+
+    const orderNumber = generateOrderNumber();
+    const customerId = req.session?.customerId || null;
+
+    const updateStock = db.transaction(() => {
+        for (const item of items) {
+            const product = db.prepare('SELECT stock FROM products WHERE id = ?').get(item.id);
+            if (product) {
+                const newStock = Math.max(0, product.stock - item.quantity);
+                db.prepare('UPDATE products SET stock = ? WHERE id = ?').run(newStock, item.id);
+            }
+        }
+    });
+
+    try {
+        const result = db.prepare(
+            'INSERT INTO orders (order_number, customer_id, customer_name, customer_email, customer_phone, customer_address, customer_city, customer_country, items, subtotal, shipping, total, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        ).run(orderNumber, customerId, customer_name, customer_email, customer_phone, customer_address || '', customer_city || '', customer_country || 'XK', JSON.stringify(items), subtotal, shipping, total, notes || '');
+
+        updateStock();
+
+        res.json({ success: true, order_number: orderNumber, total });
+    } catch (e) {
+        res.status(500).json({ error: 'Gabim gjatë krijimit të porosisë' });
+    }
+});
+
+router.get('/orders', requireAdmin, (req, res) => {
+    const db = getDb();
+    const { status } = req.query;
+    let orders;
+    if (status && status !== 'all') {
+        orders = db.prepare('SELECT * FROM orders WHERE status = ? ORDER BY id DESC').all(status);
+    } else {
+        orders = db.prepare('SELECT * FROM orders ORDER BY id DESC').all();
+    }
+    res.json(orders.map(o => ({ ...o, items: JSON.parse(o.items || '[]') })));
+});
+
+router.get('/orders/:id', requireAdmin, (req, res) => {
+    const db = getDb();
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Nuk u gjet' });
+    order.items = JSON.parse(order.items || '[]');
+    res.json(order);
+});
+
+router.patch('/orders/:id/status', requireAdmin, (req, res) => {
+    const { status } = req.body;
+    const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Status i pavlefshëm' });
+    }
+    const db = getDb();
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Nuk u gjet' });
+
+    if (status === 'cancelled' && order.status !== 'cancelled') {
+        const items = JSON.parse(order.items || '[]');
+        const restoreStock = db.transaction(() => {
+            for (const item of items) {
+                db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(item.quantity, item.id);
+            }
+        });
+        restoreStock();
+    }
+
+    db.prepare('UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(status, req.params.id);
+    res.json({ success: true });
+});
+
+router.delete('/orders/:id', requireAdmin, (req, res) => {
+    const db = getDb();
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Nuk u gjet' });
+    db.prepare('DELETE FROM orders WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+});
+
 // === STATS ===
 
 router.get('/stats', requireAdmin, (req, res) => {
@@ -207,7 +307,11 @@ router.get('/stats', requireAdmin, (req, res) => {
     const lowStock = db.prepare('SELECT COUNT(*) as c FROM products WHERE stock > 0 AND stock <= stock_min').get().c;
     const stockValue = db.prepare('SELECT SUM(stock * price) as v FROM products').get().v || 0;
     const totalCustomers = db.prepare('SELECT COUNT(*) as c FROM customers').get().c;
-    res.json({ totalCats, totalSubs, totalProds, avgPrice, totalStock, outOfStock, lowStock, stockValue, totalCustomers });
+    const totalOrders = db.prepare('SELECT COUNT(*) as c FROM orders').get().c;
+    const pendingOrders = db.prepare("SELECT COUNT(*) as c FROM orders WHERE status = 'pending'").get().c;
+    const totalRevenue = db.prepare("SELECT SUM(total) as t FROM orders WHERE status NOT IN ('cancelled')").get().t || 0;
+    const todayOrders = db.prepare("SELECT COUNT(*) as c FROM orders WHERE date(created_at) = date('now')").get().c;
+    res.json({ totalCats, totalSubs, totalProds, avgPrice, totalStock, outOfStock, lowStock, stockValue, totalCustomers, totalOrders, pendingOrders, totalRevenue, todayOrders });
 });
 
 // === CUSTOMERS (admin) ===
@@ -248,12 +352,16 @@ router.get('/export', (req, res) => {
         ...p, features: JSON.parse(p.features || '[]')
     }));
     const customers = db.prepare('SELECT id, first_name, last_name, email, phone, country, city, address, created_at FROM customers ORDER BY id').all();
+    const orders = db.prepare('SELECT * FROM orders ORDER BY id DESC').all().map(o => ({
+        ...o, items: JSON.parse(o.items || '[]')
+    }));
 
     res.json({
         exported_at: new Date().toISOString(),
         categories,
         products,
-        customers
+        customers,
+        orders
     });
 });
 

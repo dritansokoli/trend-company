@@ -87,7 +87,7 @@ async function loadPage(page) {
         case 'subcategories': title.textContent = 'Nën-Kategoritë'; renderSubcategories(content); break;
         case 'products': title.textContent = 'Produktet'; renderProductsPage(content); break;
         case 'stock': title.textContent = 'Menaxhimi i Stokut'; renderStockPage(content); break;
-        case 'orders': title.textContent = 'Porositë'; renderOrders(content); break;
+        case 'orders': title.textContent = 'Porositë'; await renderOrders(content); break;
         case 'customers': title.textContent = 'Klientët'; await renderCustomers(content); break;
         case 'settings': title.textContent = 'Cilësimet'; renderSettings(content); break;
     }
@@ -103,6 +103,12 @@ async function renderDashboard(el) {
             <div class="stat-card"><div class="stat-icon green"><i class="fas fa-box"></i></div><div class="stat-info"><h3>${stats.totalProds}</h3><p>Produkte</p></div></div>
             <div class="stat-card"><div class="stat-icon yellow"><i class="fas fa-euro-sign"></i></div><div class="stat-info"><h3>€${Number(stats.avgPrice).toFixed(2)}</h3><p>Çmimi mesatar</p></div></div>
             <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-info"><h3>${stats.totalCustomers || 0}</h3><p>Klientë</p></div></div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card${stats.pendingOrders > 0 ? ' stock-warning' : ''}"><div class="stat-icon" style="background:#fef3c7;color:#f59e0b;"><i class="fas fa-shopping-bag"></i></div><div class="stat-info"><h3>${stats.totalOrders || 0}</h3><p>Porosi Gjithsej</p></div></div>
+            <div class="stat-card${stats.pendingOrders > 0 ? ' stock-warning' : ''}"><div class="stat-icon" style="background:${stats.pendingOrders > 0 ? '#fef3c7' : '#e5e7eb'};color:${stats.pendingOrders > 0 ? '#f59e0b' : '#6b7280'};"><i class="fas fa-clock"></i></div><div class="stat-info"><h3>${stats.pendingOrders || 0}</h3><p>Porosi në Pritje</p></div></div>
+            <div class="stat-card"><div class="stat-icon green"><i class="fas fa-euro-sign"></i></div><div class="stat-info"><h3>€${Number(stats.totalRevenue || 0).toFixed(2)}</h3><p>Të Ardhura</p></div></div>
+            <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-calendar-day"></i></div><div class="stat-info"><h3>${stats.todayOrders || 0}</h3><p>Porosi Sot</p></div></div>
         </div>
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-icon green"><i class="fas fa-warehouse"></i></div><div class="stat-info"><h3>${stats.totalStock}</h3><p>Totali i Stokut</p></div></div>
@@ -424,8 +430,147 @@ window.quickRestock = async function(id) {
     loadPage('stock');
 };
 
-function renderOrders(el) {
-    el.innerHTML = '<div class="admin-table-wrapper"><div class="table-header"><h2>Porositë</h2></div><div class="empty-state"><i class="fas fa-shopping-bag"></i><p>Porositë do të shfaqen këtu.</p></div></div>';
+async function renderOrders(el) {
+    let orders = [];
+    try {
+        const res = await fetch('/api/orders');
+        const data = await res.json();
+        if (Array.isArray(data)) orders = data;
+    } catch (e) { console.log('Orders API error:', e); }
+
+    const statusLabels = { pending:'Në Pritje', confirmed:'Konfirmuar', processing:'Në Përpunim', shipped:'Dërguar', delivered:'Dorëzuar', cancelled:'Anuluar' };
+    const statusColors = { pending:'#f59e0b', confirmed:'#3b82f6', processing:'#8b5cf6', shipped:'#06b6d4', delivered:'#16a34a', cancelled:'#ef4444' };
+    const statusIcons = { pending:'fa-clock', confirmed:'fa-check', processing:'fa-cog', shipped:'fa-truck', delivered:'fa-check-double', cancelled:'fa-times' };
+    const countryNames = { XK:'Kosovë', AL:'Shqipëri', MK:'Maqedoni', ME:'Mal i Zi', DE:'Gjermani', CH:'Zvicër', AT:'Austri' };
+
+    const stats = {
+        total: orders.length,
+        pending: orders.filter(o => o.status === 'pending').length,
+        processing: orders.filter(o => ['confirmed','processing','shipped'].includes(o.status)).length,
+        delivered: orders.filter(o => o.status === 'delivered').length,
+        revenue: orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0)
+    };
+
+    el.innerHTML = `
+        <div class="stats-grid" style="margin-bottom:1.5rem;">
+            <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-shopping-bag"></i></div><div class="stat-info"><h3>${stats.total}</h3><p>Porosi Gjithsej</p></div></div>
+            <div class="stat-card" style="${stats.pending > 0 ? 'border-left:3px solid #f59e0b;' : ''}"><div class="stat-icon" style="background:#fef3c7;color:#f59e0b;"><i class="fas fa-clock"></i></div><div class="stat-info"><h3>${stats.pending}</h3><p>Në Pritje</p></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;color:#3b82f6;"><i class="fas fa-truck"></i></div><div class="stat-info"><h3>${stats.processing}</h3><p>Në Proces</p></div></div>
+            <div class="stat-card"><div class="stat-icon green"><i class="fas fa-euro-sign"></i></div><div class="stat-info"><h3>${stats.revenue.toFixed(2)} €</h3><p>Të Ardhura</p></div></div>
+        </div>
+
+        <div class="admin-table-wrapper">
+            <div class="table-header">
+                <h2><i class="fas fa-shopping-bag"></i> Porositë</h2>
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                    <button class="btn btn-sm ${!window._orderFilter || window._orderFilter === 'all' ? 'btn-primary' : 'btn-outline'}" onclick="filterOrders('all')">Të Gjitha</button>
+                    <button class="btn btn-sm ${window._orderFilter === 'pending' ? 'btn-primary' : 'btn-outline'}" onclick="filterOrders('pending')">Në Pritje</button>
+                    <button class="btn btn-sm ${window._orderFilter === 'confirmed' ? 'btn-primary' : 'btn-outline'}" onclick="filterOrders('confirmed')">Konfirmuar</button>
+                    <button class="btn btn-sm ${window._orderFilter === 'shipped' ? 'btn-primary' : 'btn-outline'}" onclick="filterOrders('shipped')">Dërguar</button>
+                    <button class="btn btn-sm ${window._orderFilter === 'delivered' ? 'btn-primary' : 'btn-outline'}" onclick="filterOrders('delivered')">Dorëzuar</button>
+                    <button class="btn btn-sm ${window._orderFilter === 'cancelled' ? 'btn-primary' : 'btn-outline'}" onclick="filterOrders('cancelled')">Anuluar</button>
+                </div>
+            </div>
+            <table class="admin-table"><thead><tr>
+                <th>#</th><th>Nr. Porosisë</th><th>Klienti</th><th>Produktet</th><th>Totali</th><th>Statusi</th><th>Data</th><th>Veprime</th>
+            </tr></thead><tbody>
+                ${orders.map((o, i) => `<tr>
+                    <td>${i + 1}</td>
+                    <td><strong style="font-family:monospace;">${o.order_number}</strong></td>
+                    <td>
+                        <strong>${o.customer_name}</strong><br>
+                        <small style="color:#6b7280;">${o.customer_phone}</small>
+                    </td>
+                    <td><small>${o.items.map(it => it.name + ' ×' + it.quantity).join(', ')}</small></td>
+                    <td><strong style="color:#9B1B1B;">${o.total.toFixed(2)} €</strong></td>
+                    <td>
+                        <select onchange="updateOrderStatus(${o.id}, this.value)" style="padding:.3rem .5rem;border-radius:6px;border:1px solid ${statusColors[o.status]};color:${statusColors[o.status]};font-weight:600;font-size:.8rem;background:white;cursor:pointer;">
+                            ${Object.keys(statusLabels).map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${statusLabels[s]}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td><small>${new Date(o.created_at).toLocaleDateString('sq-AL')} ${new Date(o.created_at).toLocaleTimeString('sq-AL', {hour:'2-digit',minute:'2-digit'})}</small></td>
+                    <td class="actions">
+                        <button class="btn btn-outline btn-sm" onclick="viewOrder(${o.id})" title="Shiko"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id},'${o.order_number}')" title="Fshi"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`).join('')}
+            </tbody></table>
+            ${orders.length === 0 ? '<div class="empty-state"><i class="fas fa-shopping-bag"></i><p>Nuk ka porosi ende.</p></div>' : ''}
+        </div>`;
+}
+
+window.filterOrders = function(status) {
+    window._orderFilter = status;
+    loadPage('orders');
+};
+
+window.updateOrderStatus = async function(id, status) {
+    await api(`/api/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    showNotification('Statusi u përditësua!');
+    loadPage('orders');
+};
+
+window.viewOrder = async function(id) {
+    const o = await api('/api/orders/' + id);
+    if (!o.id) return;
+    const statusLabels = { pending:'Në Pritje', confirmed:'Konfirmuar', processing:'Në Përpunim', shipped:'Dërguar', delivered:'Dorëzuar', cancelled:'Anuluar' };
+    const countryNames = { XK:'Kosovë', AL:'Shqipëri', MK:'Maqedoni', ME:'Mal i Zi', DE:'Gjermani', CH:'Zvicër', AT:'Austri' };
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:5000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+    modal.innerHTML = `
+        <div style="background:white;border-radius:16px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;padding:2rem;position:relative;">
+            <button onclick="this.closest('div[style*=fixed]').remove()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+            <h2 style="margin-bottom:1rem;font-size:1.3rem;"><i class="fas fa-receipt" style="color:#9B1B1B;"></i> Porosia ${o.order_number}</h2>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+                <div style="background:#f8f9fa;padding:1rem;border-radius:10px;">
+                    <h4 style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Klienti</h4>
+                    <p><strong>${o.customer_name}</strong></p>
+                    <p style="font-size:.85rem;">${o.customer_email}</p>
+                    <p style="font-size:.85rem;">${o.customer_phone}</p>
+                    <p style="font-size:.85rem;">${o.customer_address || '-'}</p>
+                    <p style="font-size:.85rem;">${o.customer_city || '-'}, ${countryNames[o.customer_country] || o.customer_country || '-'}</p>
+                </div>
+                <div style="background:#f8f9fa;padding:1rem;border-radius:10px;">
+                    <h4 style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Detaje</h4>
+                    <p><strong>Statusi:</strong> ${statusLabels[o.status]}</p>
+                    <p><strong>Nëntotali:</strong> ${o.subtotal.toFixed(2)} €</p>
+                    <p><strong>Dërgesa:</strong> ${o.shipping === 0 ? 'FALAS' : o.shipping.toFixed(2) + ' €'}</p>
+                    <p style="font-size:1.1rem;font-weight:700;color:#9B1B1B;margin-top:.5rem;">Totali: ${o.total.toFixed(2)} €</p>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom:.75rem;">Produktet</h4>
+            <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+                <thead><tr style="background:#f8f9fa;"><th style="padding:.5rem;text-align:left;">Produkti</th><th style="padding:.5rem;text-align:center;">Sasia</th><th style="padding:.5rem;text-align:right;">Çmimi</th><th style="padding:.5rem;text-align:right;">Totali</th></tr></thead>
+                <tbody>${o.items.map(it => `<tr style="border-bottom:1px solid #f3f4f6;">
+                    <td style="padding:.5rem;">${it.name}</td>
+                    <td style="padding:.5rem;text-align:center;">${it.quantity}</td>
+                    <td style="padding:.5rem;text-align:right;">${it.price.toFixed(2)} €</td>
+                    <td style="padding:.5rem;text-align:right;font-weight:600;">${(it.price * it.quantity).toFixed(2)} €</td>
+                </tr>`).join('')}</tbody>
+            </table>
+
+            ${o.notes ? `<div style="margin-top:1rem;padding:.75rem;background:#fffbeb;border-radius:8px;border:1px solid #fde68a;"><strong style="font-size:.85rem;">Shënime:</strong><p style="font-size:.85rem;margin-top:.25rem;">${o.notes}</p></div>` : ''}
+            <p style="font-size:.8rem;color:#9ca3af;margin-top:1rem;">Krijuar: ${new Date(o.created_at).toLocaleString('sq-AL')}</p>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+};
+
+window.deleteOrder = async function(id, num) {
+    if (!confirm(`Jeni i sigurt që doni të fshini porosinë "${num}"?`)) return;
+    await api('/api/orders/' + id, { method: 'DELETE' });
+    loadPage('orders');
+};
+
+function showNotification(msg) {
+    const n = document.createElement('div');
+    n.style.cssText = 'position:fixed;top:80px;right:20px;background:#16a34a;color:white;padding:.75rem 1.25rem;border-radius:8px;z-index:9999;font-size:.9rem;box-shadow:0 4px 6px rgba(0,0,0,.1);';
+    n.textContent = msg;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 3000);
 }
 
 // CUSTOMERS

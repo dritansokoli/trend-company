@@ -341,8 +341,131 @@ function updateCartUI() {
 
 function handleCheckout() {
     if (!cart.length) { alert('Shporta juaj është e zbrazët!'); return; }
-    alert(`Faleminderit për porosinë tuaj!\n\nTotali: ${formatPrice(cart.reduce((s,i)=>s+i.price*i.quantity,0))}\n\nDo t'ju kontaktojmë së shpejti.`);
-    cart = []; saveCart(); updateCartUI(); cartSidebar.classList.remove('open');
+    cartSidebar.classList.remove('open');
+    showCheckoutModal();
+}
+
+function showCheckoutModal() {
+    const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    const shipping = subtotal >= 100 ? 0 : 5;
+    const total = subtotal + shipping;
+    const countryNames = { XK:'Kosovë', AL:'Shqipëri', MK:'Maqedoni', ME:'Mal i Zi', DE:'Gjermani', CH:'Zvicër', AT:'Austri' };
+
+    const modal = document.createElement('div');
+    modal.id = 'checkoutModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:5000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+    modal.innerHTML = `
+        <div style="background:white;border-radius:16px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;padding:2rem;position:relative;">
+            <button onclick="document.getElementById('checkoutModal').remove()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">&times;</button>
+            <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#1a1a2e;margin-bottom:.5rem;"><i class="fas fa-shopping-bag" style="color:#9B1B1B;"></i> Përfundo Porosinë</h2>
+            <p style="color:#6b7280;margin-bottom:1.5rem;font-size:.9rem;">Plotëso të dhënat për dërgesë</p>
+
+            <form id="checkoutForm">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                    <div class="auth-field"><label>Emri i plotë *</label>
+                        <input type="text" id="coName" required value="${clientUser ? clientUser.name : ''}" placeholder="Emri Mbiemri" style="width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;"></div>
+                    <div class="auth-field"><label>Telefoni *</label>
+                        <input type="tel" id="coPhone" required placeholder="+383 49 ..." style="width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;"></div>
+                </div>
+                <div class="auth-field" style="margin-top:.75rem;"><label>Email *</label>
+                    <input type="email" id="coEmail" required value="${clientUser ? clientUser.email : ''}" placeholder="email@shembull.com" style="width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem;">
+                    <div class="auth-field"><label>Shteti</label>
+                        <select id="coCountry" style="width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;">
+                            <option value="XK" selected>Kosovë</option><option value="AL">Shqipëri</option><option value="MK">Maqedoni</option>
+                            <option value="ME">Mal i Zi</option><option value="DE">Gjermani</option><option value="CH">Zvicër</option><option value="AT">Austri</option>
+                        </select></div>
+                    <div class="auth-field"><label>Qyteti *</label>
+                        <input type="text" id="coCity" required placeholder="Qyteti" style="width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;"></div>
+                </div>
+                <div class="auth-field" style="margin-top:.75rem;"><label>Adresa e plotë *</label>
+                    <input type="text" id="coAddress" required placeholder="Rruga, numri, kodi postal..." style="width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;"></div>
+                <div class="auth-field" style="margin-top:.75rem;"><label>Shënime (opsionale)</label>
+                    <textarea id="coNotes" rows="2" placeholder="Shënime shtesë për porosinë..." style="width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;resize:vertical;"></textarea></div>
+
+                <div style="background:#f8f9fa;border-radius:12px;padding:1rem;margin-top:1.5rem;">
+                    <h3 style="font-size:1rem;margin-bottom:.75rem;color:#1a1a2e;">Përmbledhja e Porosisë</h3>
+                    ${cart.map(item => `<div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.85rem;color:#4b5563;">
+                        <span>${item.name} × ${item.quantity}</span><span>${formatPrice(item.price * item.quantity)}</span>
+                    </div>`).join('')}
+                    <hr style="margin:.75rem 0;border-color:#e5e7eb;">
+                    <div style="display:flex;justify-content:space-between;font-size:.85rem;color:#6b7280;"><span>Nëntotali</span><span>${formatPrice(subtotal)}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.85rem;color:#6b7280;margin-top:.25rem;"><span>Dërgesa</span><span>${shipping === 0 ? '<span style="color:#16a34a;">FALAS</span>' : formatPrice(shipping)}</span></div>
+                    <hr style="margin:.75rem 0;border-color:#e5e7eb;">
+                    <div style="display:flex;justify-content:space-between;font-size:1.1rem;font-weight:700;color:#1a1a2e;"><span>TOTALI</span><span style="color:#9B1B1B;">${formatPrice(total)}</span></div>
+                </div>
+
+                <button type="submit" id="coSubmitBtn" style="width:100%;padding:.9rem;background:#9B1B1B;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-top:1.25rem;font-family:'Montserrat',sans-serif;transition:background .3s;">
+                    <i class="fas fa-check-circle"></i> Konfirmo Porosinë
+                </button>
+            </form>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('coSubmitBtn');
+        btn.textContent = 'Duke dërguar porosinë...';
+        btn.disabled = true;
+
+        try {
+            const orderData = {
+                customer_name: document.getElementById('coName').value,
+                customer_email: document.getElementById('coEmail').value,
+                customer_phone: document.getElementById('coPhone').value,
+                customer_city: document.getElementById('coCity').value,
+                customer_country: document.getElementById('coCountry').value,
+                customer_address: document.getElementById('coAddress').value,
+                notes: document.getElementById('coNotes').value,
+                items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, image: i.image || '' }))
+            };
+
+            const res = await fetch('/api/orders', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', body: JSON.stringify(orderData)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                modal.remove();
+                cart = []; saveCart(); updateCartUI();
+                showOrderSuccess(data.order_number, data.total);
+            } else {
+                alert(data.error || 'Gabim gjatë porosisë');
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Konfirmo Porosinë';
+                btn.disabled = false;
+            }
+        } catch (err) {
+            alert('Gabim në lidhje me serverin. Provo përsëri.');
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Konfirmo Porosinë';
+            btn.disabled = false;
+        }
+    });
+}
+
+function showOrderSuccess(orderNumber, total) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:5000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+    modal.innerHTML = `
+        <div style="background:white;border-radius:16px;max-width:450px;width:100%;padding:2.5rem;text-align:center;">
+            <div style="width:80px;height:80px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+                <i class="fas fa-check" style="font-size:2.5rem;color:#16a34a;"></i>
+            </div>
+            <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#1a1a2e;margin-bottom:.5rem;">Porosia u Dërgua!</h2>
+            <p style="color:#6b7280;margin-bottom:1rem;">Faleminderit për porosinë tuaj</p>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1.5rem;">
+                <p style="font-size:.85rem;color:#6b7280;margin-bottom:.25rem;">Numri i porosisë</p>
+                <p style="font-size:1.3rem;font-weight:700;color:#1a1a2e;">${orderNumber}</p>
+                <p style="font-size:1.1rem;color:#9B1B1B;font-weight:600;margin-top:.5rem;">Totali: ${formatPrice(total)}</p>
+            </div>
+            <p style="font-size:.85rem;color:#6b7280;margin-bottom:1.5rem;">Do t'ju kontaktojmë në telefon për konfirmim të porosisë.</p>
+            <button onclick="this.closest('div[style]').parentElement.remove()" style="padding:.7rem 2rem;background:#9B1B1B;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-family:'Montserrat',sans-serif;">
+                Vazhdo Blerjen
+            </button>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 }
 
 function saveCart() { localStorage.setItem('trendCart', JSON.stringify(cart)); }

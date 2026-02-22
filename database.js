@@ -53,6 +53,26 @@ function initDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_number TEXT UNIQUE NOT NULL,
+            customer_id INTEGER,
+            customer_name TEXT NOT NULL,
+            customer_email TEXT NOT NULL,
+            customer_phone TEXT DEFAULT '',
+            customer_address TEXT DEFAULT '',
+            customer_city TEXT DEFAULT '',
+            customer_country TEXT DEFAULT 'XK',
+            items TEXT NOT NULL DEFAULT '[]',
+            subtotal REAL NOT NULL DEFAULT 0,
+            shipping REAL NOT NULL DEFAULT 0,
+            total REAL NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'pending',
+            notes TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
         CREATE TABLE IF NOT EXISTS customers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             first_name TEXT NOT NULL,
@@ -90,6 +110,31 @@ function initDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
         console.log('Customers table created (migration)');
+    }
+
+    // Auto-migrate: ensure orders table exists
+    const ordersTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='orders'").get();
+    if (!ordersTable) {
+        db.exec(`CREATE TABLE orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_number TEXT UNIQUE NOT NULL,
+            customer_id INTEGER,
+            customer_name TEXT NOT NULL,
+            customer_email TEXT NOT NULL,
+            customer_phone TEXT DEFAULT '',
+            customer_address TEXT DEFAULT '',
+            customer_city TEXT DEFAULT '',
+            customer_country TEXT DEFAULT 'XK',
+            items TEXT NOT NULL DEFAULT '[]',
+            subtotal REAL NOT NULL DEFAULT 0,
+            shipping REAL NOT NULL DEFAULT 0,
+            total REAL NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'pending',
+            notes TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        console.log('Orders table created (migration)');
     }
 
     const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
