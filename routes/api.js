@@ -356,9 +356,19 @@ router.delete('/customers/:id', requireAdmin, (req, res) => {
 router.post('/sync-now', requireAdmin, async (req, res) => {
     try {
         const { syncFromOnline, getSyncStats } = require('../auto-sync');
-        await syncFromOnline();
+        const result = await syncFromOnline();
         const stats = getSyncStats();
-        res.json({ success: true, ...stats });
+        if (result && !result.success && result.error) {
+            return res.json({ success: false, error: result.error, ...stats });
+        }
+        res.json({
+            success: true,
+            pushOk: result?.pushOk ?? false,
+            pullOk: result?.pullOk ?? false,
+            pushError: result?.pushError || null,
+            pullError: result?.pullError || null,
+            ...stats
+        });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

@@ -111,10 +111,15 @@ async function pullFromOnline() {
 }
 
 async function syncBidirectional() {
-    if (!SYNC_TOKEN || !RENDER_URL || process.env.NODE_ENV === 'production') return;
-    if (isSyncing) return;
+    if (process.env.NODE_ENV === 'production') return { success: false, error: 'Sync nuk disponohet në production' };
+    if (!SYNC_TOKEN) return { success: false, error: 'SYNC_TOKEN mungon në .env' };
+    if (!RENDER_URL) return { success: false, error: 'RENDER_URL mungon në .env' };
+    if (isSyncing) return { success: false, error: 'Sinkronizimi është duke u kryer' };
+
     isSyncing = true;
     syncCount++;
+    let pushOk = false, pullOk = false;
+    let pushError = null, pullError = null;
 
     const time = new Date().toLocaleTimeString('sq-AL');
     console.log(`[Auto-Sync] #${syncCount} Duke sinkronizuar... (${time})`);
@@ -122,6 +127,7 @@ async function syncBidirectional() {
     try {
         console.log(`[Auto-Sync]   ↑ Duke dërguar te dhënat lokale → online...`);
         const pushStats = await pushToOnline();
+        pushOk = true;
         const pushNew = (pushStats.categories || 0) + (pushStats.products || 0) + (pushStats.customers || 0) + (pushStats.orders || 0);
         const pushUpdated = pushStats.updated || 0;
         if (pushNew > 0 || pushUpdated > 0) {
@@ -130,16 +136,16 @@ async function syncBidirectional() {
             console.log(`[Auto-Sync]   ↑ ✓ Asgjë e re për dërgim`);
         }
     } catch (e) {
-        if (e.name === 'AbortError' || e.name === 'TimeoutError') {
-            console.log(`[Auto-Sync]   ↑ ✗ Timeout - serveri online nuk u përgjigj`);
-        } else {
-            console.log(`[Auto-Sync]   ↑ ✗ Gabim push: ${e.message}`);
-        }
+        pushError = e.name === 'AbortError' || e.name === 'TimeoutError'
+            ? 'Timeout - serveri online nuk u përgjigj brenda 60s'
+            : e.message;
+        console.log(`[Auto-Sync]   ↑ ✗ ${pushError}`);
     }
 
     try {
         console.log(`[Auto-Sync]   ↓ Duke shkarkuar të dhënat online → lokal...`);
         const pullStats = await pullFromOnline();
+        pullOk = true;
         const pullNew = pullStats.newCategories + pullStats.newProducts + pullStats.newCustomers + pullStats.newOrders;
         if (pullNew > 0) {
             console.log(`[Auto-Sync]   ↓ ✓ Shkarkuar: +${pullStats.newCategories} kategori, +${pullStats.newProducts} produkte, +${pullStats.newCustomers} klientë, +${pullStats.newOrders} porosi`);
@@ -147,16 +153,17 @@ async function syncBidirectional() {
             console.log(`[Auto-Sync]   ↓ ✓ Asgjë e re për shkarkim`);
         }
     } catch (e) {
-        if (e.name === 'AbortError' || e.name === 'TimeoutError') {
-            console.log(`[Auto-Sync]   ↓ ✗ Timeout - serveri online nuk u përgjigj`);
-        } else {
-            console.log(`[Auto-Sync]   ↓ ✗ Gabim pull: ${e.message}`);
-        }
+        pullError = e.name === 'AbortError' || e.name === 'TimeoutError'
+            ? 'Timeout - serveri online nuk u përgjigj brenda 60s'
+            : e.message;
+        console.log(`[Auto-Sync]   ↓ ✗ ${pullError}`);
     }
 
     lastSync = new Date();
     isSyncing = false;
-    console.log(`[Auto-Sync] #${syncCount} Përfundoi (${lastSync.toLocaleTimeString('sq-AL')})`);
+    console.log(`[Auto-Sync] #${syncCount} Përfundoi (${lastSync.toLocaleTimeString('sq-AL')}) - Push:${pushOk ? '✓' : '✗'} Pull:${pullOk ? '✓' : '✗'}`);
+
+    return { success: pushOk || pullOk, pushOk, pullOk, pushError, pullError };
 }
 
 function startAutoSync() {

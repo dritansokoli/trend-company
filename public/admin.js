@@ -807,13 +807,27 @@ window.triggerSync = async function() {
         if (res.success) {
             const time = res.lastSync ? new Date(res.lastSync).toLocaleString('sq-AL') : 'Tani';
             document.getElementById('lastSyncTime').textContent = time;
-            showNotification('Sinkronizimi dy-drejtimësh u krye me sukses!');
-            setTimeout(() => loadPage('settings'), 1000);
+            let msg = 'Sinkronizimi u krye!';
+            if (res.pushOk && res.pullOk) {
+                msg = 'Sinkronizimi dy-drejtimësh u krye me sukses!';
+            } else if (res.pushOk && !res.pullOk) {
+                msg = 'Push u krye, por Pull dështoi: ' + (res.pullError || 'Gabim i panjohur');
+            } else if (!res.pushOk && res.pullOk) {
+                msg = 'Pull u krye, por Push dështoi: ' + (res.pushError || 'Gabim i panjohur');
+            } else {
+                msg = 'Sinkronizimi dështoi.\nPush: ' + (res.pushError || '?') + '\nPull: ' + (res.pullError || '?');
+            }
+            if (res.pushError || res.pullError) {
+                alert(msg);
+            } else {
+                showNotification(msg);
+            }
+            setTimeout(() => loadPage('settings'), 1500);
         } else {
             alert(res.error || 'Gabim gjatë sinkronizimit');
         }
     } catch (e) {
-        alert('Gabim: ' + e.message);
+        alert('Gabim lidhjeje: ' + e.message);
     } finally {
         btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sinkronizo Tani (Dy-Drejtimësh)';
         btn.disabled = false;
