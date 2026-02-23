@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-02-22T21:54:24.320Z",
+  "exported_at": "2026-02-23T20:02:06.735Z",
   "categories": [
     {
       "id": 1,
@@ -576,7 +576,7 @@
         "Raft shtesë",
         "Vaj druri"
       ],
-      "image": "",
+      "image": "1771798604067-544567.jpg",
       "stock": 18,
       "stock_min": 5,
       "created_at": "2026-02-22 18:57:04"
@@ -685,6 +685,36 @@
       "notes": "",
       "created_at": "2026-02-22 21:35:17",
       "updated_at": "2026-02-22 21:35:17",
+      "payment_method": "cod",
+      "payment_status": "unpaid",
+      "stripe_session_id": ""
+    },
+    {
+      "id": 5,
+      "order_number": "TC-260222-8421",
+      "customer_id": null,
+      "customer_name": "Dritan Sokoli",
+      "customer_email": "dritansokoli@gmail.com",
+      "customer_phone": "044277261",
+      "customer_address": "Rr. Sadedin Hajda Nr.1",
+      "customer_city": "Rahovec",
+      "customer_country": "XK",
+      "items": [
+        {
+          "id": 20,
+          "name": "Tavolinë Salloni Druri Natyral",
+          "price": 195,
+          "quantity": 1,
+          "image": ""
+        }
+      ],
+      "subtotal": 195,
+      "shipping": 0,
+      "total": 195,
+      "status": "pending",
+      "notes": "",
+      "created_at": "2026-02-22 22:13:30",
+      "updated_at": "2026-02-22 22:13:30",
       "payment_method": "cod",
       "payment_status": "unpaid",
       "stripe_session_id": ""
