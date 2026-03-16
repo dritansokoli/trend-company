@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../database');
+const { logSecurityEvent } = require('../middleware/securityAudit');
 const router = express.Router();
 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -27,6 +28,47 @@ function requireAdmin(req, res, next) {
     res.status(401).json({ error: 'Nuk jeni i autorizuar' });
 }
 
+function requireAdminCsrf(req, res, next) {
+    const method = req.method.toUpperCase();
+    if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return next();
+    if (!req.session?.userId) return next();
+
+    const token = req.get('x-csrf-token');
+    if (!token || token !== req.session.csrfToken) {
+        return res.status(403).json({ error: 'CSRF token i pavlefshëm' });
+    }
+    next();
+}
+
+router.use((req, res, next) => {
+    const method = req.method.toUpperCase();
+    const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+    if (!isMutation || !req.session?.userId) return next();
+
+    const actorId = req.session.userId;
+    const actorName = req.session.username || null;
+    const routePath = req.originalUrl;
+    const startedAt = Date.now();
+
+    res.on('finish', () => {
+        const severity = res.statusCode >= 400 ? 'warn' : 'info';
+        logSecurityEvent(req, {
+            actorType: 'admin',
+            actorId,
+            actorName,
+            eventType: 'admin_api_mutation',
+            severity,
+            details: {
+                method,
+                path: routePath,
+                statusCode: res.statusCode,
+                durationMs: Date.now() - startedAt
+            }
+        });
+    });
+    next();
+});
+
 // === CATEGORIES ===
 
 router.get('/categories', (req, res) => {
@@ -45,7 +87,7 @@ router.get('/categories', (req, res) => {
     res.json(result);
 });
 
-router.post('/categories', requireAdmin, (req, res) => {
+router.post('/categories', requireAdmin, requireAdminCsrf, (req, res) => {
     const { key, name, icon, parentId } = req.body;
     if (!key || !name) return res.status(400).json({ error: 'Emri dhe çelësi janë të detyrueshme' });
     const db = getDb();
@@ -58,14 +100,14 @@ router.post('/categories', requireAdmin, (req, res) => {
     }
 });
 
-router.put('/categories/:id', requireAdmin, (req, res) => {
+router.put('/categories/:id', requireAdmin, requireAdminCsrf, (req, res) => {
     const { name, icon } = req.body;
     const db = getDb();
     db.prepare('UPDATE categories SET name = ?, icon = ? WHERE id = ?').run(name, icon, req.params.id);
     res.json({ success: true });
 });
 
-router.delete('/categories/:id', requireAdmin, (req, res) => {
+router.delete('/categories/:id', requireAdmin, requireAdminCsrf, (req, res) => {
     const db = getDb();
     const cat = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
     if (!cat) return res.status(404).json({ error: 'Nuk u gjet' });
@@ -118,7 +160,7 @@ router.get('/products/:id', (req, res) => {
     res.json(p);
 });
 
-router.post('/products', requireAdmin, upload.single('image'), (req, res) => {
+router.post('/products', requireAdmin, requireAdminCsrf, upload.single('image'), (req, res) => {
     const { name, main_category_key, sub_category_key, price, type, description, icon, features, stock, stock_min } = req.body;
     if (!name || !main_category_key || !sub_category_key || !price) {
         return res.status(400).json({ error: 'Plotëso fushat e nevojshme' });
@@ -134,7 +176,7 @@ router.post('/products', requireAdmin, upload.single('image'), (req, res) => {
     res.json({ success: true, id: result.lastInsertRowid });
 });
 
-router.put('/products/:id', requireAdmin, upload.single('image'), (req, res) => {
+router.put('/products/:id', requireAdmin, requireAdminCsrf, upload.single('image'), (req, res) => {
     const { name, main_category_key, sub_category_key, price, type, description, icon, features, stock, stock_min } = req.body;
     const db = getDb();
     const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
@@ -163,7 +205,7 @@ router.put('/products/:id', requireAdmin, upload.single('image'), (req, res) => 
     res.json({ success: true });
 });
 
-router.patch('/products/:id/stock', requireAdmin, (req, res) => {
+router.patch('/products/:id/stock', requireAdmin, requireAdminCsrf, (req, res) => {
     const { change, absolute } = req.body;
     const db = getDb();
     const p = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
@@ -180,7 +222,7 @@ router.patch('/products/:id/stock', requireAdmin, (req, res) => {
     res.json({ success: true, stock: updated.stock, stock_min: updated.stock_min });
 });
 
-router.delete('/products/:id', requireAdmin, (req, res) => {
+router.delete('/products/:id', requireAdmin, requireAdminCsrf, (req, res) => {
     const db = getDb();
     const p = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
     if (!p) return res.status(404).json({ error: 'Nuk u gjet' });
@@ -247,7 +289,7 @@ router.post('/orders', (req, res) => {
     }
 });
 
-router.patch('/orders/:id/payment', requireAdmin, (req, res) => {
+router.patch('/orders/:id/payment', requireAdmin, requireAdminCsrf, (req, res) => {
     const { payment_status } = req.body;
     const valid = ['unpaid', 'paid', 'refunded'];
     if (!valid.includes(payment_status)) return res.status(400).json({ error: 'Status i pavlefshëm' });
@@ -276,7 +318,7 @@ router.get('/orders/:id', requireAdmin, (req, res) => {
     res.json(order);
 });
 
-router.patch('/orders/:id/status', requireAdmin, (req, res) => {
+router.patch('/orders/:id/status', requireAdmin, requireAdminCsrf, (req, res) => {
     const { status } = req.body;
     const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
@@ -300,7 +342,7 @@ router.patch('/orders/:id/status', requireAdmin, (req, res) => {
     res.json({ success: true });
 });
 
-router.delete('/orders/:id', requireAdmin, (req, res) => {
+router.delete('/orders/:id', requireAdmin, requireAdminCsrf, (req, res) => {
     const db = getDb();
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
     if (!order) return res.status(404).json({ error: 'Nuk u gjet' });
@@ -343,7 +385,7 @@ router.get('/customers/:id', requireAdmin, (req, res) => {
     res.json(c);
 });
 
-router.delete('/customers/:id', requireAdmin, (req, res) => {
+router.delete('/customers/:id', requireAdmin, requireAdminCsrf, (req, res) => {
     const db = getDb();
     const c = db.prepare('SELECT id FROM customers WHERE id = ?').get(req.params.id);
     if (!c) return res.status(404).json({ error: 'Nuk u gjet' });
@@ -353,7 +395,7 @@ router.delete('/customers/:id', requireAdmin, (req, res) => {
 
 // === MANUAL SYNC TRIGGER ===
 
-router.post('/sync-now', requireAdmin, async (req, res) => {
+router.post('/sync-now', requireAdmin, requireAdminCsrf, async (req, res) => {
     try {
         const { syncFromOnline, getSyncStats } = require('../auto-sync');
         const result = await syncFromOnline();

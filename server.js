@@ -10,6 +10,9 @@ fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
+const sessionSecret = process.env.SESSION_SECRET || 'development-only-secret-change-me';
+const sessionCookieName = process.env.SESSION_COOKIE_NAME || 'trend.sid';
 
 initDatabase();
 
@@ -19,17 +22,27 @@ app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripe
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+if (isProduction) app.set('trust proxy', 1);
+
+if (isProduction && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)) {
+    throw new Error('SESSION_SECRET must be at least 32 characters in production');
+}
+
+app.locals.sessionCookieName = sessionCookieName;
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'trend-company-secret-key-change-in-production',
+    name: sessionCookieName,
+    proxy: isProduction,
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
+    rolling: true,
+    unset: 'destroy',
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction,
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: 'lax'
+        maxAge: 8 * 60 * 60 * 1000,
+        sameSite: isProduction ? 'strict' : 'lax'
     }
 }));
 

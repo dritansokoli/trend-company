@@ -88,6 +88,19 @@ function initDatabase() {
             address TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS security_audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            actor_type TEXT NOT NULL DEFAULT 'system',
+            actor_id INTEGER,
+            actor_name TEXT,
+            event_type TEXT NOT NULL,
+            severity TEXT NOT NULL DEFAULT 'info',
+            ip TEXT,
+            user_agent TEXT,
+            details_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
     `);
 
     // Auto-migrate: add stock columns if they don't exist yet

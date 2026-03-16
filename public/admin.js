@@ -4,9 +4,30 @@ let currentPage = 'dashboard';
 let editingProductId = null;
 let editingCatId = null;
 let editingSubId = null;
+let adminCsrfToken = null;
+
+function isMutationMethod(method) {
+    return ['POST', 'PUT', 'PATCH', 'DELETE'].includes((method || 'GET').toUpperCase());
+}
+
+async function ensureAdminCsrfToken() {
+    if (adminCsrfToken) return adminCsrfToken;
+    const res = await fetch('/api/auth/csrf-token', { credentials: 'include' });
+    const data = await res.json();
+    if (!res.ok || !data.csrfToken) throw new Error(data.error || 'CSRF token missing');
+    adminCsrfToken = data.csrfToken;
+    return adminCsrfToken;
+}
 
 async function api(url, opts = {}) {
-    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    const method = (opts.method || 'GET').toUpperCase();
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    const isLoginRequest = /\/api\/auth\/login(\?|$)/.test(url);
+    if (isMutationMethod(method) && !isLoginRequest) {
+        const token = await ensureAdminCsrfToken();
+        headers['x-csrf-token'] = token;
+    }
+    const res = await fetch(url, { ...opts, method, headers, credentials: 'include' });
     return res.json();
 }
 
@@ -31,6 +52,7 @@ function showAdmin() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminWrapper').style.display = 'flex';
     setupSidebarLinks();
+    ensureAdminCsrfToken().catch(() => {});
     loadPage('dashboard');
 }
 
@@ -55,13 +77,17 @@ function setupNav() {
             method: 'POST',
             body: JSON.stringify({ username: document.getElementById('loginUsername').value, password: document.getElementById('loginPassword').value })
         });
-        if (res.success) showAdmin();
+        if (res.success) {
+            adminCsrfToken = null;
+            showAdmin();
+        }
         else alert(res.error || 'Gabim në hyrje');
     });
 
     document.getElementById('logoutBtn').addEventListener('click', async (e) => {
         e.preventDefault();
         await api('/api/auth/logout', { method: 'POST' });
+        adminCsrfToken = null;
         showLogin();
     });
 
@@ -343,7 +369,8 @@ window.saveProduct = async function() {
 
     const url = editingProductId ? `/api/products/${editingProductId}` : '/api/products';
     const method = editingProductId ? 'PUT' : 'POST';
-    await fetch(url, { method, body: formData });
+    const token = await ensureAdminCsrfToken();
+    await fetch(url, { method, body: formData, credentials: 'include', headers: { 'x-csrf-token': token } });
     closeProductModal(); loadPage('products');
 };
 
@@ -711,11 +738,11 @@ async function renderSettings(el) {
                         </div>
                         <div class="form-group" style="margin-bottom:1rem;">
                             <label>Fjalëkalimi i Ri</label>
-                            <input type="password" id="newPassword" placeholder="••••••••" required minlength="6">
+                            <input type="password" id="newPassword" placeholder="••••••••" required minlength="12">
                         </div>
                         <div class="form-group" style="margin-bottom:1.5rem;">
                             <label>Konfirmo Fjalëkalimin e Ri</label>
-                            <input type="password" id="confirmPassword" placeholder="••••••••" required minlength="6">
+                            <input type="password" id="confirmPassword" placeholder="••••••••" required minlength="12">
                         </div>
                         <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Ndrysho Fjalëkalimin</button>
                     </form>
@@ -787,7 +814,11 @@ async function renderSettings(el) {
         const newPass = document.getElementById('newPassword').value;
         const confirmPass = document.getElementById('confirmPassword').value;
         if (newPass !== confirmPass) { alert('Fjalëkalimet e reja nuk përputhen!'); return; }
-        if (newPass.length < 6) { alert('Fjalëkalimi duhet të ketë së paku 6 karaktere!'); return; }
+        const strongPass = newPass.length >= 12 && /[A-Z]/.test(newPass) && /[a-z]/.test(newPass) && /\d/.test(newPass) && /[^A-Za-z0-9]/.test(newPass);
+        if (!strongPass) {
+            alert('Fjalëkalimi duhet të ketë të paktën 12 karaktere dhe të përfshijë shkronjë të madhe, të vogël, numër dhe simbol.');
+            return;
+        }
         const res = await api('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass }) });
         if (res.success) {
             alert('Fjalëkalimi u ndryshua me sukses!');

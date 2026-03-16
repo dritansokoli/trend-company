@@ -20,6 +20,8 @@ const productModal = document.getElementById('productModal');
 const closeModal = document.getElementById('closeModal');
 const modalBody = document.getElementById('modalBody');
 const categoryButtonsContainer = document.getElementById('categoryButtons');
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
 
 async function loadCategories() {
     try {
@@ -143,7 +145,49 @@ function updateCategoryTitle(title, subtitle) {
     if (s) s.textContent = subtitle;
 }
 
+function closeMobileMenu() {
+    document.body.classList.remove('mobile-nav-open');
+    if (!mobileMenuBtn) return;
+    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+    mobileMenuBtn.classList.remove('is-open');
+    const icon = mobileMenuBtn.querySelector('i');
+    if (icon) {
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+    }
+}
+
+function openMobileMenu() {
+    document.body.classList.add('mobile-nav-open');
+    if (!mobileMenuBtn) return;
+    mobileMenuBtn.setAttribute('aria-expanded', 'true');
+    mobileMenuBtn.classList.add('is-open');
+    const icon = mobileMenuBtn.querySelector('i');
+    if (icon) {
+        icon.classList.remove('fa-bars');
+        icon.classList.add('fa-times');
+    }
+}
+
+function toggleMobileMenu() {
+    if (document.body.classList.contains('mobile-nav-open')) closeMobileMenu();
+    else openMobileMenu();
+}
+
 function setupEventListeners() {
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    }
+    if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+    }
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) closeMobileMenu();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMobileMenu();
+    });
+
     cartBtn.addEventListener('click', () => cartSidebar.classList.add('open'));
     closeCart.addEventListener('click', () => cartSidebar.classList.remove('open'));
     checkoutBtn.addEventListener('click', handleCheckout);
@@ -165,6 +209,7 @@ function setupEventListeners() {
             e.preventDefault();
             const target = document.querySelector(this.getAttribute('href'));
             if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            closeMobileMenu();
         });
     });
 
@@ -181,6 +226,7 @@ function setupEventListeners() {
                 updateCategoryTitle(cat.name, `Zgjidh nën-kategorinë e ${cat.name.toLowerCase()}`);
             }
             scrollToProducts();
+            closeMobileMenu();
         });
     });
 
